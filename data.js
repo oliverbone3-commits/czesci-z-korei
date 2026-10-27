@@ -18,22 +18,22 @@ const BRANDS = [
   { key: "genesis", name: "Genesis", logo: "img/brands/genesis.svg", h: 17 },
 ];
 
-// Популярные модели — раскрывающиеся карточки. Фото сгенерированы Gemini в студии.
+// Популярные модели — раскрывающиеся карточки. Фото сгенерированы в ChatGPT по фото-образцам (2026-10-27, docs/GPT_PROMPTS_MODELS.md).
 // side — боковой профиль (img/models/side/<key>.jpg, широкий кадр 21:9, машина передом влево в правой части, слева пустая студия):
 // [крыша, низ колёс, перед, зад] в долях кадра (крыша — с рейлингами). По нему машины встают на одни линии, фото закрывает всю карточку.
 // Модель без side нужно описать замером box [крыша, низ колёс, центр по горизонтали] и дать вид спереди img/models/<key>.jpg
 // (крыша на 10% высоты карточки, колёса на 78%, центр — по правому краю); сейчас таких нет, старые виды спереди — archive/models-front/.
 // vitrine — ключ модели в витрине (null — только запрос по VIN).
 const POPULAR = [
-  { key: "carnival", brand: "kia", name: "Kia Carnival", full: "Kia Carnival KA4", side: [0.34, 0.76, 0.458, 0.95], vitrine: "carnival" },
-  { key: "k8", brand: "kia", name: "Kia K8", side: [0.33, 0.83, 0.295, 0.955], vitrine: "k8" },
-  { key: "gv80", brand: "genesis", name: "Genesis GV80", side: [0.245, 0.743, 0.365, 0.917], vitrine: "genesis" },
-  { key: "g80", brand: "genesis", name: "Genesis G80", side: [0.33, 0.752, 0.384, 0.933], vitrine: "genesis" },
-  { key: "sorento", brand: "kia", name: "Kia Sorento", side: [0.285, 0.83, 0.363, 0.963], vitrine: null },
-  { key: "palisade", brand: "hyundai", name: "Hyundai Palisade", side: [0.232, 0.83, 0.319, 0.945], vitrine: null },
-  { key: "grandeur", brand: "hyundai", name: "Hyundai Grandeur", side: [0.394, 0.856, 0.348, 0.95], vitrine: null },
-  { key: "gv70", brand: "genesis", name: "Genesis GV70", side: [0.307, 0.802, 0.39, 0.943], vitrine: null },
-  { key: "g90", brand: "genesis", name: "Genesis G90", side: [0.349, 0.769, 0.368, 0.955], vitrine: null },
+  { key: "carnival", brand: "kia", name: "Kia Carnival", full: "Kia Carnival KA4", side: [0.252, 0.828, 0.267, 0.97], vitrine: "carnival" },
+  { key: "k8", brand: "kia", name: "Kia K8", side: [0.375, 0.83, 0.324, 0.942], vitrine: "k8" },
+  { key: "gv80", brand: "genesis", name: "Genesis GV80", side: [0.25, 0.825, 0.29, 0.964], vitrine: "genesis" },
+  { key: "g80", brand: "genesis", name: "Genesis G80", side: [0.41, 0.828, 0.373, 0.966], vitrine: "genesis" },
+  { key: "sorento", brand: "kia", name: "Kia Sorento", side: [0.219, 0.83, 0.304, 0.982], vitrine: null },
+  { key: "palisade", brand: "hyundai", name: "Hyundai Palisade", side: [0.255, 0.83, 0.312, 0.963], vitrine: null },
+  { key: "grandeur", brand: "hyundai", name: "Hyundai Grandeur", side: [0.347, 0.828, 0.328, 0.966], vitrine: null },
+  { key: "gv70", brand: "genesis", name: "Genesis GV70", side: [0.278, 0.828, 0.318, 0.957], vitrine: null },
+  { key: "g90", brand: "genesis", name: "Genesis G90", side: [0.358, 0.83, 0.31, 0.968], vitrine: null },
 ];
 
 // Распознавание марки и модели по VIN — шаг 1 окна заявки (vinDecode() в app.js).

@@ -226,9 +226,9 @@ main:focus { outline: none; }
 .arrow:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); color: #fff; }
 .arrow:disabled { opacity: .35; cursor: default; }
 /* Карточка модели — раскрывающаяся (по мотивам perk.com). Свёрнутая 240×440: половина машины, центр машины
-   по правому краю. Раскрытая шириной --ow: машина выезжает целиком (transform, без перерасчёта), слева панель.
+   по правому краю. Раскрытая шириной --ow (900 px — машина видна на 87–96%): машина выезжает (transform, без перерасчёта), слева панель.
    Ширина меняется через flex-basis; текст панели фиксированной ширины — не переносится во время анимации. */
-.models { --cw: 240px; --ow: 640px; --ease-open: cubic-bezier(.65,0,.25,1); }
+.models { --cw: 240px; --ow: 900px; --ease-open: cubic-bezier(.65,0,.25,1); }
 .model { flex: 0 0 var(--cw); scroll-snap-align: start; position: relative; height: 440px; border-radius: var(--r); overflow: hidden;
   background: #dcdde0; color: var(--ink); text-align: center; transition: flex-basis .6s var(--ease-open), transform .25s; }
 .model.is-open { flex-basis: var(--ow); }
@@ -874,6 +874,9 @@ html:has(.dlg[open]) { overflow: hidden; }
 /* Появление при прокрутке */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1); }
 .reveal.is-in { opacity: 1; transform: none; }
+/* У карточек моделей .reveal не должен затирать переход ширины: ширина и сдвиг фото идут по одной кривой,
+   иначе карточка раскрывается рывком и на мгновение видна правая кромка фото. */
+.model.reveal { transition: flex-basis .6s var(--ease-open), opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1); }
 .perks__grid .reveal:nth-child(2) { transition-delay: .08s; }
 .perks__grid .reveal:nth-child(3) { transition-delay: .16s; }
 .perks__grid .reveal:nth-child(4) { transition-delay: .24s; }
@@ -893,6 +896,9 @@ html:has(.dlg[open]) { overflow: hidden; }
   .hero__side--r { position: relative; order: 2; right: auto; bottom: auto; width: 100%; height: 190px; margin-top: var(--sp-1); }
   .hero__side--r .car { left: 50%; width: 360px; max-width: none; margin-left: -180px; bottom: 0; }
   .top nav a:not(.btn) { display: none; }
+}
+@media (max-width: 960px) {
+  .models { --ow: 640px; }
 }
 @media (max-width: 640px) {
   .by, .top nav .btn { display: none; }
