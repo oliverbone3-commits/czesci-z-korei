@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Części z Korei — oryginalne części do aut z Korei</title>
+  <meta name="description" content="Oryginalne części do Kia Carnival, Kia K8 i Genesis prosto z Korei. Dobór po koreańskim VIN, dostawa kontenerem. Projekt Arena Auto.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip"></a>
+  <header class="top">
+    <div class="wrap top__in">
+      <a class="logo" href="#">Części z Korei <span>pilot</span></a>
+      <a class="by" href="https://arena-auto.pl/" target="_blank" rel="noopener" data-i18n="brand.by"></a>
+      <nav>
+        <a href="#models" data-i18n="nav.models"></a>
+        <a href="#kits" data-i18n="nav.kits"></a>
+        <a href="#vitrine" data-i18n="nav.examples"></a>
+        <a href="#how" data-i18n="nav.how"></a>
+        <a href="#faq">FAQ</a>
+        <!-- Свой выпадающий список языка вместо нативного select -->
+        <div class="lang" id="lang">
+          <button type="button" class="lang__btn" id="langBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="langList" aria-label="Język / Language">
+            <span id="langCur">PL</span>
+            <svg class="lang__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="lang__list" id="langList" role="listbox" tabindex="-1" hidden></ul>
+        </div>
+        <a class="btn btn--sm" href="#vin" data-i18n="nav.vin"></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+  <!-- Первый экран: крупный заголовок с меняющейся моделью, по краям статичные машины (как у carwow), карточка поиска -->
+  <section class="hero">
+    <div class="hero__side hero__side--l" aria-hidden="true"><img class="car" src="img/hero/carnival.jpg" alt="" width="1600" height="695"></div>
+    <div class="hero__side hero__side--r" aria-hidden="true"><img class="car" src="img/hero/gv80.jpg" alt="" width="1600" height="695"></div>
+    <div class="wrap hero__in">
+      <p class="eyebrow" data-i18n="hero.eyebrow"></p>
+      <h1><span data-i18n="hero.h1"></span><br><span class="rot-box"><span class="rot" id="rot">Kia Carnival</span></span></h1>
+      <p class="lead" data-i18n="hero.lead"></p>
+
+      <!-- Поиск «всплывает» в окно при фокусе в поле (liftSearch() в app.js): затемнение + место под карточку в hero -->
+      <div class="search-dim" id="searchDim" aria-hidden="true"></div>
+      <div class="search-ph" id="searchPh" hidden></div>
+      <div class="search" id="search">
+        <button type="button" class="search__x" id="searchX" data-i18n-aria="vr.close">×</button>
+        <div class="search__tabs" role="group" aria-label="VIN / OE">
+          <button type="button" data-tab="vin" aria-pressed="true" data-i18n="tab.vin"></button>
+          <button type="button" data-tab="oe" aria-pressed="false" data-i18n="tab.oe"></button>
+          <button type="button" data-tab="arena" aria-pressed="false" data-i18n="tab.arena"></button>
+        </div>
+        <form class="search__box" id="searchForm" novalidate>
+          <input id="searchInput" autocomplete="off" aria-label="VIN / OE">
+          <button class="round" type="submit" aria-label="→">→</button>
+        </form>
+        <div class="search__arena" id="searchArena" hidden>
+          <p data-i18n="search.arena.p"></p>
+          <button class="btn btn--sm" type="button" data-arena data-i18n="who.arena.cta"></button>
+        </div>
+        <p class="search__msg" id="searchMsg" role="status"></p>
+        <!-- Результат VIN: модель → детали → канал → отправка, без формы (рисует vinRes() в app.js) -->
+        <div class="vinres" id="vinRes" hidden>
+          <div class="vinres__head" id="vrHead"></div>
+          <div class="pick vinres__pick" id="pickVin" hidden></div>
+          <div id="vrParts"></div>
+          <label class="vinres__note" id="vrNoteBox" hidden><span id="vrNoteK"></span><input id="vrNote" autocomplete="off"></label>
+          <div class="vinres__send">
+            <div class="vinres__sendhead">
+              <p class="vinres__k" id="vrChK" data-i18n="vr.ch"></p>
+              <button type="button" class="vinres__link vinres__form" id="vrForm" data-i18n="vr.form"></button>
+            </div>
+            <div class="vinres__row">
+              <div class="seg" role="group" aria-labelledby="vrChK" id="vrCh">
+                <button type="button" data-ch="wa" aria-pressed="true">WhatsApp</button>
+                <button type="button" data-ch="tg" aria-pressed="false">Telegram</button>
+                <button type="button" data-ch="mail" aria-pressed="false">E-mail</button>
+              </div>
+              <a class="btn vinres__go" id="vrGo"></a>
+            </div>
+            <p class="vinres__msg" id="vrMsg" role="status"></p>
+          </div>
+        </div>
+        <p class="search__alt" id="searchAlt" data-i18n="hero.alt"></p>
+      </div>
+      <!-- Марки: светло-серые логотипы без подписей; клик фильтрует популярные модели -->
+      <div class="brands" id="brands"></div>
+
+      <!-- Факты — «наклейки» с иконкой, слегка наклонены -->
+      <ul class="facts">
+        <li class="sticker st-1"><span class="ix" data-ix="discount-shape"></span><span data-i18n="fact.4"></span></li>
+        <li class="sticker st-2"><span class="ix" data-ix="receipt"></span><span data-i18n="fact.1"></span></li>
+        <li class="sticker st-3"><span class="ix" data-ix="verify"></span><span data-i18n="fact.3"></span></li>
+        <li class="sticker st-4"><span class="ix" data-ix="airplane"></span><span data-i18n="fact.2"></span></li>
+        <li class="sticker st-5"><span class="ix" data-ix="ship"></span><span data-i18n="fact.5"></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Популярные модели — карточки с половиной машины; заголовок слева, стрелки листания справа -->
+  <section id="models" class="section">
+    <div class="wrap">
+      <div class="models__head">
+        <h2 class="reveal" data-i18n="models.h2"></h2>
+        <div class="models__nav">
+          <button type="button" class="arrow" data-dir="-1" data-i18n-aria="models.prev">←</button>
+          <button type="button" class="arrow" data-dir="1" data-i18n-aria="models.next">→</button>
+        </div>
+      </div>
+      <div class="models" id="models-grid"></div>
+      <div class="models__dots" id="modelDots"></div>
+    </div>
+  </section>
+
+  <!-- Баннеры-карусель — спрятаны 2026-10-26 (решение пользователя: пока непонятно, зачем блок; переосмыслить). Вернуть — убрать hidden -->
+  <section class="section section--flush" id="promoSection" hidden>
+    <div class="wrap">
+      <div class="promo" id="promo">
+        <div class="promo__track" id="promoTrack">
+          <article class="promo__slide" style="--img:url(img/photo/carnival.jpg)">
+            <h3 data-i18n="promo.1.h"></h3>
+            <p data-i18n="promo.1.p"></p>
+            <button class="btn btn--sm" type="button" data-arena data-i18n="who.arena.cta"></button>
+          </article>
+          <article class="promo__slide" style="--img:url(img/photo/ship.jpg)">
+            <h3 data-i18n="promo.2.h"></h3>
+            <p data-i18n="promo.2.p"></p>
+            <a class="btn btn--sm" href="#how" data-i18n="nav.how"></a>
+          </article>
+          <article class="promo__slide" style="--img:url(img/photo/mechanic.jpg)">
+            <h3 data-i18n="promo.3.h"></h3>
+            <p data-i18n="promo.3.p"></p>
+            <button class="btn btn--sm" type="button" data-ask-key="who.sto.ask" data-i18n="who.sto.cta"></button>
+          </article>
+        </div>
+        <div class="promo__dots" id="promoDots"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Сравнение цен с анимированными полосами -->
+  <section class="section section--white">
+    <div class="wrap save">
+      <div class="reveal">
+        <h2 data-i18n="cmp.h"></h2>
+        <p class="muted" data-i18n="cmp.note"></p>
+        <p class="save__max" id="cmpMax"></p>
+        <p class="muted" data-i18n="cmp.incl"></p>
+        <a class="btn" href="#vin" data-i18n="cmp.btn"></a>
+      </div>
+      <div>
+        <div class="seg" role="group" id="cmpSwitch" data-i18n-aria="cmp.seg">
+          <button type="button" data-cmp="carnival" aria-pressed="true">Carnival</button>
+          <button type="button" data-cmp="k8" aria-pressed="false">K8</button>
+          <button type="button" data-cmp="genesis" aria-pressed="false">Genesis</button>
+        </div>
+        <div class="cmp reveal" id="cmp"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Наборы — отдельная секция: тёмная карточка на сером фоне (между белым сравнением и серой витриной),
+       не зависит от фильтров витрины деталей -->
+  <section id="kits" class="section kits-sec">
+    <div class="wrap">
+      <div class="kits-panel reveal">
+        <div class="kits-panel__head">
+          <div>
+            <h2 data-i18n="kits.h2"></h2>
+            <p data-i18n="kits.note"></p>
+            <p class="stamp" data-stamp></p>
+          </div>
+          <div class="kits__nav" id="kitsNav" hidden>
+            <button type="button" class="arrow" data-kit="-1" data-i18n-aria="kits.prev">←</button>
+            <button type="button" class="arrow" data-kit="1" data-i18n-aria="kits.next">→</button>
+          </div>
+        </div>
+        <div class="kits" id="bundles"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vitrine" class="section">
+    <div class="wrap">
+      <div class="vit__head">
+        <div>
+          <h2 class="reveal" data-i18n="vit.h2"></h2>
+          <p class="muted" data-i18n="vit.note"></p>
+          <p class="stamp" data-stamp></p>
+        </div>
+      </div>
+
+      <!-- Фильтры в одну строку: два выпадающих селектора (свой listbox, как выбор языка) + поиск по номеру OE -->
+      <div class="vit__tools" role="search" data-i18n-aria="vit.tools">
+        <div class="pick" id="pickModel"></div>
+        <div class="pick" id="pickCat"></div>
+        <input class="vit__oe" id="vitOe" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="vit.oe.ph" data-i18n-aria="vit.oe">
+      </div>
+      <div class="grid" id="items"></div>
+      <p class="empty" id="empty" hidden data-i18n="vit.empty"></p>
+      <p class="vit__more" data-i18n="vit.more"></p>
+    </div>
+  </section>
+
+  <!-- Jak to działa (вариант C «Przewodnik»): шаги-вкладки с метками Ty / My слева, сцена шага справа; рисует how() в app.js -->
+  <section id="how" class="section section--white">
+    <div class="wrap">
+      <div class="how__head reveal">
+        <div><h2 data-i18n="how.h2"></h2><p class="muted" data-i18n="how.lead"></p></div>
+        <a class="btn" href="#vin"><span data-i18n="nav.vin"></span> <span aria-hidden="true">›</span></a>
+      </div>
+      <div class="how reveal" id="how-grid">
+        <div>
+          <ol class="how__steps" id="howSteps"></ol>
+          <div class="how__ctl"><button type="button" class="how__pause" id="howPause"></button></div>
+        </div>
+        <div class="how__stage" id="howStage"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Доставка (вариант Б, по мотивам продуктовых блоков perk.com): слева переключатель со сроками, заголовок, текст и два вопроса-ответа;
+       справа — коллаж из трёх светлых наклеек; снизу бегущая строка маршрута -->
+  <section id="delivery" class="section dlv">
+    <div class="wrap">
+      <div class="dlv__grid reveal" id="dlvBody">
+        <div class="seg" role="group" data-i18n-aria="del.label" id="delSwitch">
+          <button type="button" data-mode="e" aria-pressed="true" aria-controls="dlvBody"><span data-i18n="del.e.tab"></span><small data-i18n="del.e.when"></small></button>
+          <button type="button" data-mode="c" aria-pressed="false" aria-controls="dlvBody"><span data-i18n="del.c.tab"></span><small data-i18n="del.c.when"></small></button>
+        </div>
+        <h2 id="dlvH"></h2>
+        <p class="dlv__lead" id="dlvLead"></p>
+        <ul class="dlv__stickers" id="dlvFacts"></ul>
+        <div class="dlv__qa" id="dlvMore"></div>
+        <p class="dlv__ask" data-i18n="dlv.ask"></p>
+      </div>
+    </div>
+    <!-- Бегущая строка маршрута выбранного способа (светлая, часть блока) -->
+    <div class="ticker" data-i18n-aria="ticker.label" role="region">
+      <div class="ticker__track" id="tickerTrack"></div>
+      <button type="button" class="ticker__pause" id="tickerPause"></button>
+    </div>
+  </section>
+
+  <!-- Бенефиты (по мотивам perk.com): заголовок + 4 светлые карточки; Arena Auto как гарант -->
+  <section class="section section--white perks">
+    <div class="wrap">
+      <div class="perks__head">
+        <div>
+          <p class="perks__eyebrow reveal" data-i18n="trust.eyebrow"></p>
+          <h2 class="reveal" data-i18n="trust.h2"></h2>
+        </div>
+        <div class="perks__aside reveal">
+          <p data-i18n="trust.lead"></p>
+          <a class="btn" href="#vin" data-i18n="nav.vin"></a>
+        </div>
+      </div>
+      <div class="perks__grid">
+        <article class="perk reveal">
+          <span class="ix ix--perk" data-ix="search-normal"></span>
+          <p class="perk__tag" data-i18n="trust.pick.tag"></p>
+          <h3 data-i18n="trust.pick.h"></h3>
+          <p data-i18n="trust.pick.p"></p>
+        </article>
+        <article class="perk reveal">
+          <span class="ix ix--perk" data-ix="discount-shape"></span>
+          <p class="perk__tag" data-i18n="trust.price.tag"></p>
+          <h3 data-i18n="trust.price.h"></h3>
+          <p data-i18n="trust.price.p"></p>
+        </article>
+        <article class="perk reveal">
+          <span class="ix ix--perk" data-ix="ship"></span>
+          <p class="perk__tag" data-i18n="trust.ship.tag"></p>
+          <h3 data-i18n="trust.ship.h"></h3>
+          <p data-i18n="trust.ship.p"></p>
+        </article>
+        <article class="perk reveal">
+          <span class="ix ix--perk" data-ix="verify"></span>
+          <p class="perk__tag" data-i18n="trust.sure.tag"></p>
+          <h3 data-i18n="trust.sure.h"></h3>
+          <p data-i18n="trust.sure.p"></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ (вариант 2): на сером фоне; слева заголовок, три коротких абзаца и три способа связаться, справа вопросы белыми карточками -->
+  <section id="faq" class="section">
+    <div class="wrap faq-grid">
+      <div class="faq__head reveal">
+        <h2 data-i18n="faq.h2"></h2>
+        <div class="faq__text">
+          <p class="muted" data-i18n="faq.t1"></p>
+          <p class="muted" data-i18n="faq.t2"></p>
+          <p class="muted" data-i18n="faq.t3"></p>
+        </div>
+        <div class="faq__contact">
+          <a class="btn" href="#vin"><span data-i18n="nav.vin"></span> <span aria-hidden="true">›</span></a>
+          <a class="btn btn--ghost" data-msg="wa" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn btn--ghost" data-msg="tg" target="_blank" rel="noopener">Telegram</a>
+        </div>
+      </div>
+      <div class="faq reveal">
+        <details><summary><span data-i18n="faq.q1"></span><span class="faq__pm" aria-hidden="true">+</span></summary><p data-i18n="faq.a1"></p></details>
+        <details><summary><span data-i18n="faq.q2"></span><span class="faq__pm" aria-hidden="true">+</span></summary><p data-i18n="faq.a2"></p></details>
+        <details><summary><span data-i18n="faq.q3"></span><span class="faq__pm" aria-hidden="true">+</span></summary><p data-i18n="faq.a3"></p></details>
+        <details><summary><span data-i18n="faq.q4"></span><span class="faq__pm" aria-hidden="true">+</span></summary><p data-i18n="faq.a4"></p></details>
+        <details><summary><span data-i18n="faq.q5"></span><span class="faq__pm" aria-hidden="true">+</span></summary><p data-i18n="faq.a5"></p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA по образцу perk.com, в ширину контента со скруглениями: ч/б фото, крупный заголовок и кнопка по центру, факты — три отдельные плашки-обводки с «+» над заголовком -->
+  <section class="section cta-wrap">
+    <div class="wrap">
+      <div class="cta reveal">
+        <img class="cta__bg" src="img/photo/cta.jpg" alt="" loading="lazy">
+        <div class="cta__in">
+          <ul class="cta__badges">
+            <li data-i18n="cta.f1"></li>
+            <li data-i18n="cta.f2"></li>
+            <li data-i18n="cta.f3"></li>
+          </ul>
+          <h2 data-i18n="cta.h2"></h2>
+          <a class="btn cta__btn" href="#vin"><span data-i18n="cta.btn"></span> <span aria-hidden="true">›</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Заявка по VIN. Без JS форма стоит здесь, и ссылки href="#vin" ведут сюда; с JS панель переносится
+       в модальное окно #vinDlg (его открывают все кнопки «Wyślij VIN», «Zapytaj», «Zamów zestaw»…), а секция прячется. -->
+  <section id="vin" class="section">
+    <div class="wrap wrap--narrow" id="vinPanel">
+      <div class="dlg__head">
+        <h2 id="vinTitle" data-i18n="form.h2"></h2>
+        <p class="muted" data-i18n="form.note"></p>
+      </div>
+      <!-- В модалке форма — колонка: поля прокручиваются (.dlg__fields), низ с кнопкой (.dlg__foot) всегда на виду -->
+      <form id="vinForm" class="form" novalidate>
+        <div class="dlg__fields">
+          <label><span data-i18n="form.vin"></span>
+            <input name="vin" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vinHint" data-i18n-ph="form.vin.ph">
+            <small class="hint" id="vinHint" data-i18n="form.vin.hint"></small>
+          </label>
+          <label class="inline form__opt"><input type="checkbox" name="arena"> <span data-i18n="form.arena"></span></label>
+          <label><span data-i18n="form.parts"></span> <textarea name="parts" rows="3" data-i18n-ph="form.parts.ph"></textarea></label>
+          <div class="form__row">
+            <label><span data-i18n="form.contact"></span> <input name="contact" type="tel" autocomplete="tel" data-i18n-ph="form.contact.ph"></label>
+            <label><span data-i18n="form.email"></span> <input name="email" type="email" autocomplete="email" data-i18n-ph="form.email.ph"></label>
+          </div>
+          <label class="inline consent"><input type="checkbox" name="rodo"> <span data-i18n="form.consent"></span></label>
+        </div>
+        <div class="dlg__foot form__send">
+          <p class="form__msg" id="formMsg" role="status"></p>
+          <button class="btn form__submit" type="submit"><span data-i18n="form.submit"></span> <span aria-hidden="true">›</span></button>
+          <p class="hint form__more" data-i18n="form.more"></p>
+        </div>
+      </form>
+      <!-- Готово: письмо открыто. Показываем вместо формы. -->
+      <div class="dlg__ok" id="vinOk" hidden>
+        <span class="ix ix--perk" data-ix="box-tick"></span>
+        <h3 id="vinOkTitle" tabindex="-1" data-i18n="form.ok.h"></h3>
+        <p class="muted" data-i18n="msg.ok"></p>
+        <button class="btn" type="button" data-dlg-close data-i18n="form.ok.close"></button>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p data-i18n="foot.arena"></p>
+      <p data-i18n="foot.1"></p>
+      <p class="muted" data-i18n="foot.2"></p>
+      <p class="credits">
+        Foto: <a href="https://unsplash.com/" target="_blank" rel="noopener">Unsplash</a> (statek, warsztat; koło — Franck V.; trasa: Jinhan Moon, Tuan P., Harald Smith, Kamil Gliwiński, Toni Pomar, Maarten van den Heuvel) · Zdjęcia części: wizualizacje poglądowe (Google Gemini) ·
+        Kia Carnival w banerze — Ethan Llamas, <a href="https://commons.wikimedia.org/wiki/File:Kia_Carnival_KA4_PE_1.6T_EX_HEV_Snowflake_White_Pearl.jpg" target="_blank" rel="noopener">CC BY-SA 4.0</a>; auta na pierwszym ekranie, w kartach modeli i zdjęcia części — wygenerowane (AI) ·
+        Logo marek: <a href="https://simpleicons.org/" target="_blank" rel="noopener">Simple Icons</a> (Hyundai, Kia), <a href="https://commons.wikimedia.org/wiki/File:Genesis_Motor_Logo.svg" target="_blank" rel="noopener">Wikimedia Commons</a> (Genesis), <a href="https://github.com/filippofilip95/car-logos-dataset" target="_blank" rel="noopener">car-logos-dataset</a> (SsangYong) — znaki towarowe należą do ich właścicieli ·
+        Ikony: <a href="https://iconsax.io" target="_blank" rel="noopener">Iconsax</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Модальное окно заявки: панель #vinPanel переносит сюда app.js -->
+  <dialog class="dlg" id="vinDlg" aria-labelledby="vinTitle">
+    <button class="dlg__x" type="button" data-dlg-close data-i18n-aria="form.close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </dialog>
+
+  <script src="icons.js"></script>
+  <script src="i18n.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
