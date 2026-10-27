@@ -57,7 +57,7 @@ h3 { font-size: var(--fs-lg); font-weight: 700; }
 /* Удобная длина строки — до ~68 знаков */
 p { max-width: 68ch; }
 /* Мелкий текст в плотном гротеске — чуть разреженнее */
-.chip, .badge, .card__model, .card__oe, .model__meta, .hint, .consent, .bar, .by, .lang, .facts, .search__alt { letter-spacing: .01em; }
+.chip, .badge, .card__model, .card__oe, .model__meta, .bar, .by, .lang, .facts, .search__alt { letter-spacing: .01em; }
 a { color: inherit; }
 img { max-width: 100%; }
 .wrap { max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter); }
@@ -112,7 +112,7 @@ main:focus { outline: none; }
 @keyframes langIn { from { opacity: 0; transform: translateY(-4px); } }
 
 /* Первый экран: статичные машины по краям — по мотивам carwow.co.uk */
-/* overflow-x: clip, а не hidden: машины по краям обрезаются, а выпадающая панель VIN (.vinres) может выйти за низ первого экрана */
+/* overflow-x: clip: машины по краям обрезаются по ширине */
 .hero { position: relative; background: var(--black); color: #fff; padding: var(--sp-8) 0; text-align: center; overflow-x: clip; }
 .hero__in { position: relative; z-index: 5; display: flex; flex-direction: column; align-items: center; }
 .eyebrow { font-size: var(--fs-ui); font-weight: 600; color: var(--green); margin: 0 0 var(--sp-3); }
@@ -142,146 +142,21 @@ main:focus { outline: none; }
 .hero__side--l .car { right: 0; }
 .hero__side--r .car { left: 0; }
 
-.search { position: relative; width: min(640px, 100%); background: var(--black-2); border-radius: 24px; padding: var(--sp-3) var(--sp-4) var(--sp-4); }
-/* Окно поиска (2026-10-26, идеи Дмитрия): по Enter с готовым результатом карточка раскрывается адаптивно —
-   ровно на высоту панели результата: сначала вверх от своего места (вкладки и поле стоят где стояли), не хватает
-   места до шапки — недостающее вниз, не хватает и вниз — высота экрана и прокрутка внутри панели.
-   Геометрию (--lift-top/-left/-w/-h/-r) считает liftSize() в app.js; движение и пересчёт при смене содержимого —
-   переходы CSS (.56 с). Затемнение, страница не прокручивается. Место в hero держит .search-ph. */
-html.is-lifted { overflow: hidden; }
-html.is-lifted .hero__in { z-index: 50; } /* выше липкой шапки (10) */
-.search-ph { width: min(640px, 100%); }
-/* затемнение нарастает и гаснет вместе с раскрытием/схлопыванием (.56 с, та же кривая) */
-.search-dim { position: fixed; inset: 0; z-index: 1; background: rgba(13,15,16,.58); opacity: 0; pointer-events: none; transition: opacity .56s cubic-bezier(.22,.61,.36,1); }
-html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
-/* justify-content: flex-end — пока окно ниже содержимого (в начале раскрытия), обрезается верх, а вкладки и поле
-   остаются внизу на месте; панель (min-height: 0) сжимается первой */
-.search.is-lifted { position: fixed; z-index: 2; top: var(--lift-top); left: var(--lift-left); width: var(--lift-w); height: var(--lift-h);
-  border-radius: var(--lift-r); display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden;
-  transition: top .56s, left .56s, width .56s, height .56s, border-radius .56s; transition-timing-function: cubic-bezier(.22,.61,.36,1); }
-.search.is-lifted .vinres { order: -1; flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  margin: 0 0 var(--sp-4); padding: 0 var(--sp-1); border-top: 0; border-bottom: 1px solid rgba(255,255,255,.12); }
-.search.is-lifted .vinres__top { padding-right: var(--sp-7); } /* место под крестик */
-/* Поле поиска и каскад «Po marce» под открытой панелью приглушены — не спорят с ней; наведение или фокус — снова ярко */
-.search.is-lifted:has(.vinres:not([hidden])) :is(.search__box, .cars--hero) { opacity: .45; transition: opacity .25s; }
-.search.is-lifted:has(.vinres:not([hidden])) :is(.search__box, .cars--hero):is(:hover, :focus-within) { opacity: 1; }
-.search__x { display: none; position: absolute; z-index: 1; top: var(--sp-2); right: var(--sp-2); width: 44px; height: 44px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.2); background: var(--black-2); color: #fff; font: 400 24px/1 var(--f-text); cursor: pointer; place-items: center;
-  transition: background .2s, border-color .2s; }
-.search__x:hover { background: #fff; color: var(--ink); border-color: #fff; }
-.search.is-lifted .search__x { display: inline-grid; }
-.search.is-lifted .search__tabs { padding-inline: var(--sp-7); }
-@media (max-width: 640px) {
-  /* телефон: окно во весь экран сверху (с экранной клавиатурой раскрытию вверх не хватает места) — поле наверху,
-     панель под ним; размеры (весь экран = видимая часть, над клавиатурой) ставит liftSize() */
-  .search.is-lifted { justify-content: flex-start; padding: var(--sp-4) var(--gutter) var(--sp-6); }
-  .search.is-lifted .vinres { order: 0; margin: var(--sp-4) 0 0; padding: var(--sp-4) 0 0; border-top: 1px solid rgba(255,255,255,.12); border-bottom: 0; }
-  .search.is-lifted .vinres__top { padding-right: 0; }
-  .search.is-lifted .search__tabs { justify-content: flex-start; padding-inline: 0 var(--sp-7); }
-  .search.is-lifted:has(.vinres:not([hidden])) .search__alt { display: none; } /* мессенджеры уже в панели */
-}
-.search__tabs { display: flex; justify-content: center; gap: var(--sp-2); margin-bottom: var(--sp-3); flex-wrap: wrap; }
-.search__tabs button { font: inherit; font-size: var(--fs-ui); font-weight: 700; color: var(--on-black); background: none; border: 0;
-  padding: var(--sp-2) var(--sp-3); min-height: 44px; cursor: pointer; border-bottom: 2px solid transparent; }
-.search__tabs button[aria-pressed="true"] { color: #fff; border-color: #fff; }
-@media (max-width: 640px) { .search__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-2); } } /* 4 вкладки — 2×2, а не 3+1 */
+/* Карточка поиска — только вход в окно заявки (2026-10-27): одно поле «VIN albo numer części (OE)» + «→»,
+   под ним ошибка формата и две ссылки-кнопки (без VIN / klient Arena) */
+.search { position: relative; width: min(640px, 100%); background: var(--black-2); border-radius: 24px; padding: var(--sp-3); }
 .search__box { display: flex; align-items: center; background: #fff; border-radius: 999px; padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-5); }
-.search__box[hidden] { display: none; } /* «Po marce» и «Klient Arena» — без поля ввода */
 .search__box:focus-within { box-shadow: 0 0 0 3px var(--green), 0 0 0 6px var(--black-2); }
 .search__box input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: var(--fs-body); min-height: 44px; color: var(--ink); background: none; }
 .round { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--green); color: var(--green-ink);
   font-size: 20px; font-weight: 800; cursor: pointer; transition: transform .2s; display: inline-grid; place-items: center; text-decoration: none; }
 .round:hover { transform: translateX(3px); }
-.search__arena p { color: var(--on-black); margin: 0 0 var(--sp-3); }
 .search__msg { min-height: 1.2em; margin: var(--sp-3) auto 0; font-size: var(--fs-sm); color: #ffd38a; }
 .search__msg:empty { min-height: 0; margin: 0; }
-.search__alt { font-size: var(--fs-sm); color: var(--on-black); margin: var(--sp-3) 0 0; }
-.search__alt a { font-weight: 700; color: var(--green); text-decoration: none; }
-/* «VIN poprawny» — только для скринридера: панель VIN выпадает поверх, высота первого экрана не должна меняться */
-.search__msg.is-ok { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-/* VIN в поле поиска и в необязательном поле панели — моноширинный верхний регистр, как в форме (плейсхолдер — обычным шрифтом) */
-.search__box input.is-vin:not(:placeholder-shown), .vinres__field.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
-
-/* Каскад «Marka → Model → Rok» (2026-10-27): вкладка «Po marce», панель VIN, форма заявки. Три селектора .pick
-   в ряд, подпись над значением (как .pick на телефоне); «Inny model» — поле на месте года. В первом экране справа «→». */
-.cars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); text-align: left; }
-.cars[hidden], .cars > [hidden] { display: none; }
-.cars--hero { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: center; }
-.cars .pick__btn { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: 100%; min-height: 56px; padding: var(--sp-2) var(--sp-3); text-align: left; column-gap: var(--sp-2); }
-.cars .pick__k { grid-row: 1; font-size: var(--fs-sm); line-height: 1.2; }
-.cars .pick__v { grid-row: 2; line-height: 1.3; }
-.cars .pick__chev { grid-row: 1 / 3; grid-column: 2; margin: 0; }
-.cars .pick__list { max-height: min(300px, 45vh); overflow-y: auto; overscroll-behavior: contain; }
-.cars .pick:nth-child(3) .pick__list { left: auto; right: 0; }
-.cars__other { min-width: 0; min-height: 56px; padding: 0 var(--sp-4); font: inherit; font-size: var(--fs-ui); color: var(--ink); background: #fff;
-  border: 1px solid var(--field-border); border-radius: 12px; }
-.cars__other:focus { outline: 2px solid var(--green); outline-offset: 1px; }
-/* окно поиска поднято — каскад внизу окна (панель над ним), списки раскрываются вверх */
-.search.is-lifted .cars--hero .pick__list { top: auto; bottom: calc(100% + var(--sp-2)); }
-@media (max-width: 640px) {
-  /* марка | модель, ниже год | «→» (в форме и панели — год на всю ширину) */
-  .cars { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .cars > :nth-child(3), .cars > .cars__other { grid-column: 1 / -1; }
-  .cars--hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
-  .cars--hero > :nth-child(2) { grid-column: 2 / -1; }
-  .cars--hero > :nth-child(3), .cars--hero > .cars__other { grid-column: 1 / 3; }
-  .cars .pick:nth-child(3) .pick__list { left: 0; right: auto; }
-  .search.is-lifted .cars--hero .pick__list { top: calc(100% + var(--sp-2)); bottom: auto; } /* на телефоне каскад наверху */
-}
-
-/* Результат VIN / «Po marce» / OE под полем поиска — два шага (прототип одобрен 2026-10-27): 1 «Czego potrzebujesz?» —
-   крупное поле, подсказки ссылками, «Dalej»; 2 «Gdzie odpisać?» — три кнопки-канала столбиком, галочка «Pilne».
-   Свой компонент первого экрана на тёмном; из базовых — .btn, .pick (каскад), .ix. Пилюль-переключателей в панели нет. */
-/* Внутри поднятого окна поиска — продолжение карточки под полем, в потоке (прокручивается вместе с окном) */
-.vinres { display: grid; gap: var(--sp-4); margin-top: var(--sp-4); padding: var(--sp-4) var(--sp-1) 0; border-top: 1px solid rgba(255,255,255,.12);
-  text-align: left; animation: vrIn .3s cubic-bezier(.2,.8,.2,1); }
-.vinres[hidden] { display: none; }
-@keyframes vrIn { from { opacity: 0; transform: translateY(-8px) scaleY(.96); } }
-/* Строка авто (muted) и «1 z 2» справа */
-.vinres__top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
-.vinres__car { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--on-black); }
-.vinres__car .vinres__link { min-height: 0; font-size: inherit; }
-.vinres__step { flex: none; font-size: var(--fs-sm); color: var(--on-black); white-space: nowrap; }
-.vinres__link { font: inherit; font-size: var(--fs-ui); font-weight: 700; color: var(--on-black); background: none; border: 0; padding: 0; min-height: 44px;
-  cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
-.vinres__link:hover { color: #fff; text-decoration-color: currentColor; }
-/* Шаг — колонка; смена шага — короткий сдвиг с проявлением, высоту окна плавно пересчитывает liftSize() */
-.vinres__pane { display: grid; gap: var(--sp-3); animation: vrStep .3s cubic-bezier(.2,.8,.2,1); }
-.vinres__pane[hidden] { display: none; }
-@keyframes vrStep { from { opacity: 0; transform: translateX(var(--sp-3)); } }
-.vinres__h { margin: 0; font-size: var(--fs-xl); font-weight: 700; line-height: 1.2; color: #fff; }
-/* Поле — как поле поиска: белая пилюля 56 px, фокус — зелёное кольцо */
-.vinres__field { width: 100%; min-height: 56px; padding: 0 var(--sp-5); font: inherit; font-size: var(--fs-body); color: var(--ink); background: #fff;
-  border: 0; border-radius: 999px; outline: 0; }
-.vinres__field:focus { box-shadow: 0 0 0 3px var(--green), 0 0 0 6px var(--black-2); }
-.vinres__field[aria-invalid="true"] { box-shadow: 0 0 0 2px #ffd38a; }
-.vinres__err { margin: 0; text-align: left; }
-.vinres__err:empty { display: none; } /* пустая подсказка не добавляет зазор сетки */
-/* Подсказки — ссылки, не пилюли: «Popularne: + Atrapa chłodnicy · + …» */
-.vinres__sug { margin: 0; font-size: var(--fs-sm); line-height: 1.6; color: var(--on-black); }
-.vinres__sug .vinres__link { min-height: 32px; font-size: var(--fs-sm); color: #fff; }
-.vinres__sug:empty, .vinres__vin-box[hidden], .vinres__hasvin[hidden] { display: none; }
-.vinres__hasvin { justify-self: start; min-height: 32px; font-size: var(--fs-sm); }
-.vinres__vin-box { display: grid; gap: var(--sp-2); }
-.vinres__go { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); width: 100%; min-height: 56px; font-size: var(--fs-lg); }
-/* Шаг 2: каналы — большие кнопки во всю ширину, каждая сразу отправляет; WhatsApp — зелёная .btn, остальные белые */
-.vinres__back { justify-self: start; max-width: 100%; min-height: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
-.vinres__chs { display: grid; gap: var(--sp-2); }
-.vinres__ch { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); min-height: 56px; padding: var(--sp-3) var(--sp-5);
-  font-size: var(--fs-lg); font-weight: 700; text-decoration: none; border-radius: 999px; }
-.vinres__ch.btn .ix { --ix-accent: var(--green-ink); }
-.vinres__ch--light { color: var(--ink); background: #fff; transition: background .2s; }
-.vinres__ch--light:hover { background: var(--canvas); }
-.vinres__ch--light .ix { --ix-accent: var(--green-text); }
-.vinres__urgent { display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; font-size: var(--fs-ui); font-weight: 500; color: #fff; cursor: pointer; }
-.vinres__urgent input { width: 22px; height: 22px; margin: 0; accent-color: var(--green); cursor: pointer; }
-.vinres__hint { margin: 0; font-size: var(--fs-sm); color: var(--on-black); }
-.vinres__opts { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--sp-4); }
-.vinres__form { min-height: 44px; font-size: var(--fs-sm); }
-.vinres__done { justify-items: start; padding-block: var(--sp-2); }
-@media (max-width: 640px) {
-  .vinres { padding-inline: 0; }
-}
+.search__alt { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--sp-5); font-size: var(--fs-sm); margin: var(--sp-2) 0 0; }
+.search__link { min-height: 44px; padding: 0 var(--sp-1); font: inherit; font-weight: 700; color: var(--green); background: none; border: 0; cursor: pointer;
+  text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color .2s; }
+.search__link:hover { text-decoration-color: currentColor; }
 /* Факты в первом экране — «наклейки»: плотный фон, наклон, тень; при загрузке приклеиваются по очереди */
 .facts { list-style: none; padding: 0; margin: var(--sp-6) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-4) var(--sp-5); }
 /* Приглушённые наклейки (фидбэк: слишком перетягивали внимание): тёмное стекло в тон экрану,
@@ -542,13 +417,6 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .price__pl { color: var(--muted); }
 .badge { font-size: var(--fs-sm); font-weight: 700; color: var(--green-text); background: var(--green-pale); border-radius: 999px; padding: 2px var(--sp-2); white-space: nowrap; }
 .badge--rare { color: var(--rare-text); background: var(--rare-pale); white-space: normal; }
-/* Чип-переключатель .tag (базовый элемент, 2026-10-27): категории «Czego potrzebujesz?» в панели результата и в форме.
-   Вид кнопки .seg — белая пилюля с обводкой; выбран — бледно-зелёный, как бейдж экономии. Мультивыбор, aria-pressed. */
-.tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.tag { min-height: 40px; padding: 0 var(--sp-4); font: inherit; font-size: var(--fs-sm); font-weight: 600; letter-spacing: .01em; color: var(--ink);
-  background: #fff; border: 0; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; transition: background .2s, color .2s; }
-.tag:hover { background: var(--canvas); }
-.tag[aria-pressed="true"] { color: var(--green-text); background: var(--green-pale); box-shadow: inset 0 0 0 1px var(--green); }
 
 @media (max-width: 1000px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .kits { --kit-w: calc((100% - var(--grid-gap)) / 2); } }
 @media (max-width: 640px) {
@@ -801,48 +669,11 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 @media (max-width: 640px) { .faq__contact { display: grid; grid-template-columns: 1fr 1fr; } .faq__contact .btn { justify-content: center; text-align: center; } .faq__contact .btn:first-child { grid-column: 1 / -1; }
   .faq summary { padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4); font-size: var(--fs-body); } .faq details p { padding: 0 var(--sp-4) var(--sp-4); } }
 
-/* Форма */
-.form { display: grid; gap: var(--sp-4); margin-top: var(--sp-4); }
-.form label { display: grid; gap: var(--sp-2); font-weight: 600; font-size: var(--fs-ui); }
-.form input:not([type=checkbox]), .form textarea {
-  font: inherit; font-weight: 400; padding: var(--sp-3) var(--sp-4); border: 1px solid var(--field-border); border-radius: 12px; width: 100%; background: #fff; }
-.form [aria-invalid="true"] { border-color: #b3261e; box-shadow: 0 0 0 1px #b3261e; }
-.form input:focus, .form textarea:focus { outline: 2px solid var(--green); outline-offset: 1px; }
-.form input[name=vin] { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
-.form input[name=vin]::placeholder { text-transform: none; letter-spacing: 0; font-family: var(--f-text); }
-.hint { font-weight: 400; font-size: var(--fs-sm); color: var(--muted); }
-.form .inline { display: flex; gap: var(--sp-3); align-items: center; font-weight: 500; }
-.form .inline input { width: 22px; height: 22px; accent-color: var(--green); flex: none; }
-.form .consent { font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
-.form .btn { justify-self: start; }
-.form__msg { margin: 0; font-weight: 600; }
-.form__msg:empty { display: none; }
-.form__msg.is-error { color: #b3261e; }
-.form[hidden] { display: none; }
-/* «Kupiłem auto w Arena Auto» — опция плиткой; отмечена — бледно-зелёная, поле VIN приглушено (оно не обязательно) */
-/* Авто вместо VIN — каскад .cars под подписью, как у остальных полей */
-.form__car, .form__when { display: grid; gap: var(--sp-2); }
-.form__k { font-weight: 600; font-size: var(--fs-ui); }
-.form .form__opt { padding: var(--sp-3) var(--sp-4); border-radius: 12px; background: var(--canvas); cursor: pointer; transition: background .2s; }
-.form .form__opt:has(:checked) { background: var(--green-pale); }
-.form:has([name=arena]:checked) label:has([name=vin]) { opacity: .55; }
-/* Телефон (обязателен) и e-mail (по желанию — продублировать оферту на почту) — в ряд; ≤640px — друг под другом */
-.form__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
-.form label .hint { display: inline; }
-.dlg__fields { display: grid; gap: var(--sp-4); }
-/* Отправка: ошибка, крупная кнопка на всю ширину формы, под ней по центру «odpowiada człowiek» и мессенджеры */
-.form__send { display: grid; justify-items: center; gap: var(--sp-3); }
-.form .form__submit { justify-self: stretch; padding: var(--sp-4) var(--sp-6); font-size: var(--fs-lg); }
-.form__msg { justify-self: stretch; }
-.form__more { margin: 0; text-align: center; max-width: 52ch; }
-.form__more a { color: var(--green-text); font-weight: 700; text-decoration: none; }
-
-/* Модальное окно заявки — нативный <dialog> (showModal: остальная страница inert, Esc закрывает).
-   Белая карточка радиус 24 на затемнении как в CTA; внутри панель #vinPanel из секции #vin (её переносит app.js).
-   Колонка из трёх зон: шапка (заголовок, подзаголовок) — прокручиваемые поля (.dlg__fields) — низ (.dlg__foot:
-   ошибка, кнопка, «odpowiada człowiek» и мессенджеры) всегда на виду. Окно не выше экрана; если всё помещается —
-   высота по содержимому, без пустоты. ≤640px — во весь экран, выезжает снизу, низ прижат к краю. */
-.dlg { width: min(600px, calc(100% - 2 * var(--gutter))); max-width: none; max-height: calc(100dvh - 2 * var(--sp-6));
+/* Окно заявки «Zapytanie» — нативный <dialog> (showModal: остальная страница inert, Esc закрывает), 2026-10-27.
+   Белая карточка 520 px, радиус 24 (как .search, .cmp), затемнение как в CTA. Сверху строка .rq__bar: «‹ Wstecz» · «Krok N z 3» ·
+   крестик; ниже прокручиваемое тело .rq__body с одним шагом: вопрос-заголовок, ответ, одна главная кнопка в потоке под полем.
+   ≤640 — во весь экран, выезжает снизу, высота = видимая часть экрана (над клавиатурой). */
+.dlg { width: min(520px, calc(100% - 2 * var(--gutter))); max-width: none; max-height: calc(100dvh - 2 * var(--sp-6));
   padding: 0; border: 0; border-radius: 24px; background: #fff; color: var(--ink); box-shadow: 0 24px 64px rgba(13,15,16,.3); overflow: hidden; }
 .dlg[open] { display: flex; flex-direction: column; animation: dlgIn .35s cubic-bezier(.2,.8,.2,1); }
 .dlg::backdrop { background: rgba(13,15,16,.58); }
@@ -850,38 +681,113 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 @keyframes dlgIn { from { opacity: 0; transform: translateY(var(--sp-5)) scale(.98); } }
 @keyframes dlgFade { from { opacity: 0; } }
 html:has(.dlg[open]) { overflow: hidden; }
-.dlg__body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.dlg__head { flex: none; padding: var(--sp-6) calc(var(--sp-6) + var(--sp-7)) var(--sp-4) var(--sp-6); }
-.dlg h2 { font-size: clamp(var(--fs-xl), 3vw, 32px); margin: 0 0 var(--sp-2); }
-.dlg__head .muted { margin: 0; }
-.dlg .form { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 0; margin: 0; }
-.dlg .form[hidden] { display: none; }
-.dlg__fields { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-2) var(--sp-6) var(--sp-5); }
-.dlg__foot { flex: none; padding: var(--sp-4) var(--sp-6) var(--sp-5); border-top: 1px solid var(--line); background: #fff; }
-.dlg__x { position: absolute; top: var(--sp-4); right: var(--sp-4); z-index: 2; width: 44px; height: 44px; border-radius: 50%;
+.dlg__x { flex: none; margin-left: auto; width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid #c4c9cd; background: #fff; color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
 .dlg__x:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
 .dlg__x svg { width: 20px; height: 20px; }
-.dlg__ok { display: grid; justify-items: start; gap: var(--sp-3); padding: var(--sp-2) var(--sp-6) var(--sp-6); overflow-y: auto; }
-.dlg__ok[hidden] { display: none; }
-.dlg__ok h3 { margin: 0; font-size: var(--fs-xl); }
-.dlg__ok h3:focus { outline: none; }
-.dlg__ok p { margin: 0; }
-.dlg__ok .ix path { animation: ixDraw 1s cubic-bezier(.4,0,.2,1) .1s forwards; }
-/* С JS секция #vin пустая и спрятана — у CTA возвращаем нижнее поле до подвала */
+
+.rq__bar { flex: none; display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-4) var(--sp-4) 0 var(--sp-6); }
+.rq__back { min-height: 44px; padding: 0 var(--sp-2) 0 0; font: inherit; font-size: var(--fs-ui); font-weight: 700; color: var(--ink); background: none; border: 0; cursor: pointer; }
+.rq__back:hover { color: var(--green-text); }
+.rq__back[hidden] { display: none; }
+.rq__step { font-size: var(--fs-sm); color: var(--muted); }
+.rq__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-3) var(--sp-6) var(--sp-6); }
+/* Шаг — колонка; смена шага — короткий сдвиг с проявлением */
+.rq__pane { display: grid; gap: var(--sp-4); animation: vrStep .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes vrStep { from { opacity: 0; transform: translateX(var(--sp-3)); } }
+.rq__h { margin: 0; font-size: clamp(var(--fs-xl), 2.4vw, 28px); font-weight: 600; line-height: 1.2; letter-spacing: -.01em; }
+.rq__h:focus { outline: none; }
+.rq__pane p { margin: 0; }
+.rq__h + .rq__sub { margin-top: calc(-1 * var(--sp-2)); }
+.rq__sub, .rq__ctx { font-size: var(--fs-sm); color: var(--muted); }
+.rq__ctx { margin-bottom: calc(-1 * var(--sp-2)); }
+/* Главная кнопка — во всю ширину, 56 px; вторичная — та же с обводкой (.btn--ghost) */
+.rq__go { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); width: 100%; min-height: 56px; font-size: var(--fs-lg); }
+.rq__btns { display: grid; gap: var(--sp-2); }
+.rq__link { min-height: 32px; padding: 0; font: inherit; font-size: var(--fs-sm); font-weight: 700; color: var(--green-text); background: none; border: 0; cursor: pointer;
+  text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color .2s; }
+.rq__link:hover { text-decoration-color: currentColor; }
+/* Поле: белое, обводка --field-border, радиус 12, 56 px; ошибка — красная обводка и текст под полем */
+.rq__f { display: grid; gap: var(--sp-2); }
+.rq__field { width: 100%; min-height: 56px; padding: 0 var(--sp-4); font: inherit; font-size: var(--fs-body); color: var(--ink); background: #fff;
+  border: 1px solid var(--field-border); border-radius: 12px; }
+.rq__field:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+.rq__field.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
+.rq__err { font-size: var(--fs-sm); font-weight: 600; color: #b3261e; }
+.rq__err:empty { display: none; }
+.rq__f:has([aria-invalid="true"]) :is(.rq__field, .rq__add) { border-color: #b3261e; box-shadow: 0 0 0 1px #b3261e; }
+/* Список-выбор: крупные строки-кнопки со «›», клик сразу ведёт дальше */
+.rq__opts { display: grid; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.rq__opt { display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px; padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-5);
+  font: inherit; color: var(--ink); text-align: left; background: #fff; border: 0; cursor: pointer; transition: background .2s; }
+.rq__opt + .rq__opt { border-top: 1px solid var(--line); }
+.rq__opt:hover { background: var(--canvas); }
+.rq__opt:focus-visible { outline-offset: -3px; }
+.rq__opt-t { flex: 1; display: grid; }
+.rq__opt b { font-size: var(--fs-body); font-weight: 600; }
+.rq__opt small { font-size: var(--fs-sm); color: var(--muted); }
+.rq__chev { font-size: var(--fs-xl); line-height: 1; color: var(--muted); transition: transform .2s; }
+.rq__opt:hover .rq__chev { transform: translateX(3px); color: var(--ink); }
+.rq__logo { flex: none; display: grid; place-items: center; width: 56px; }
+.rq__logo img { width: auto; filter: brightness(0); opacity: .8; }
+/* Карточка авто «To Twoje auto?»: марка капсом muted, модель крупно, VIN моноширинным */
+.rq__car { display: grid; gap: var(--sp-1); padding: var(--sp-5); background: var(--canvas); border-radius: var(--r); }
+.rq__car small { font-size: var(--fs-sm); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rq__car b { font-size: clamp(var(--fs-xl), 3vw, 30px); font-weight: 600; line-height: 1.15; }
+.rq__car .rq__link { justify-self: start; }
+.rq__vin { font-family: ui-monospace, Menlo, monospace; font-size: var(--fs-ui); letter-spacing: .04em; word-break: break-all; }
+/* Детали: серые капсулы с крестиком; поле — белая пилюля с круглой «+» внутри, как поле поиска */
+.rq__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.rq__chips:empty { display: none; }
+.rq__chip { display: inline-flex; align-items: center; gap: var(--sp-1); max-width: 100%; padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-4);
+  font-size: var(--fs-ui); background: var(--canvas); border-radius: 999px; }
+.rq__chip small { font-size: var(--fs-sm); color: var(--muted); white-space: nowrap; }
+.rq__rm { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 0; background: none; color: var(--muted); font: 400 22px/1 var(--f-text); cursor: pointer; transition: background .2s, color .2s; }
+.rq__rm:hover { background: #fff; color: var(--ink); }
+.rq__sub[hidden] { display: none; }
+.rq__add { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-5); background: #fff;
+  border: 1px solid var(--field-border); border-radius: 999px; }
+.rq__add:focus-within { outline: 2px solid var(--green); outline-offset: 1px; }
+.rq__add input { flex: 1; min-width: 0; min-height: 44px; border: 0; outline: 0; font: inherit; font-size: var(--fs-body); color: var(--ink); background: none; }
+.rq__add .round:hover { transform: scale(1.06); }
+.rq__sug { font-size: var(--fs-sm); line-height: 1.6; color: var(--muted); }
+.rq__sug:empty { display: none; }
+.rq__sug .rq__link { margin-right: var(--sp-2); }
+.rq__check { display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; font-size: var(--fs-ui); font-weight: 500; cursor: pointer; }
+.rq__check input { width: 22px; height: 22px; margin: 0; accent-color: var(--green); cursor: pointer; flex: none; }
+/* Сводка перед отправкой: строки с разделителями, справа «Zmień» */
+.rq__sum { margin: 0; border: 1px solid var(--line); border-radius: var(--r); }
+.rq__row { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; align-items: baseline; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
+.rq__row + .rq__row { border-top: 1px solid var(--line); }
+.rq__row dt { font-size: var(--fs-sm); color: var(--muted); }
+.rq__row dd { margin: 0; font-size: var(--fs-ui); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.rq__row dd small { display: block; font-size: var(--fs-sm); font-weight: 400; color: var(--muted); }
+.rq__row dd .rq__vin { font-size: var(--fs-sm); }
+.rq__oe { font-size: var(--fs-sm); font-weight: 400; color: var(--muted); white-space: nowrap; }
+/* Каналы: WhatsApp — главная зелёная, под ней в ряд Telegram и E-mail с обводкой */
+.rq__ch { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); }
+.rq__ch .ix { --ix-accent: currentColor; }
+.rq__alts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.rq__alts .rq__ch { min-height: 52px; }
+/* Готово: зелёный круг с иконкой канала, запасной путь серым блоком */
+.rq__ok { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: var(--green-ink); }
+.rq__ok .ix { width: 32px; height: 32px; --ix-accent: var(--green-ink); }
+.rq__fb { display: grid; justify-items: start; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); background: var(--canvas); border-radius: var(--r); }
+.rq__fb .rq__sub { overflow-wrap: anywhere; }
+.rq__msg { width: 100%; padding: var(--sp-3); font: inherit; font-size: var(--fs-sm); color: var(--ink); background: #fff; border: 1px solid var(--field-border); border-radius: 12px; resize: vertical; }
+/* Без JS — простой запасной путь вместо окна */
+.nojs__btns { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+/* С JS секция #vin спрятана — у CTA возвращаем нижнее поле до подвала */
 .cta-wrap:has(+ #vin[hidden]) { padding-bottom: var(--section-y); }
 @media (max-width: 640px) {
-  /* --vvh ставит app.js по visualViewport: окно сжимается над экранной клавиатурой, низ остаётся виден */
+  /* --vvh ставит app.js по visualViewport: окно сжимается над экранной клавиатурой, кнопка под полем остаётся видна */
   .dlg { width: 100%; height: var(--vvh, 100dvh); max-height: none; margin: 0; border-radius: 0; }
   .dlg[open] { animation-name: dlgUp; }
   @keyframes dlgUp { from { transform: translateY(100%); } }
-  .dlg__head { padding: var(--sp-5) calc(var(--gutter) + var(--sp-7)) var(--sp-3) var(--gutter); }
-  .dlg__fields { padding: var(--sp-2) var(--gutter) var(--sp-5); }
-  .dlg__foot { padding: var(--sp-3) var(--gutter) var(--sp-4); }
-  .dlg__ok { padding: var(--sp-2) var(--gutter) var(--sp-6); }
-  .dlg__x { top: var(--sp-3); right: var(--sp-3); }
-  .dlg.is-tight .dlg__head .muted, .dlg.is-tight .form__more { display: none; }
-  .form__row { grid-template-columns: 1fr; }
+  .rq__bar { padding: var(--sp-3) var(--sp-3) 0 var(--gutter); }
+  .rq__body { padding: var(--sp-3) var(--gutter) var(--sp-6); }
+  .rq__row { grid-template-columns: minmax(0, 1fr) auto; }
+  .rq__row dt { grid-column: 1 / -1; margin-bottom: calc(-1 * var(--sp-2)); }
 }
 
 .foot { background: var(--black); color: var(--on-black); padding: var(--sp-6) 0; font-size: var(--fs-sm); }
@@ -902,7 +808,7 @@ html:has(.dlg[open]) { overflow: hidden; }
 /* Прорисовка линий: в плитках и комплектах — при загрузке, в остальных блоках — при появлении */
 .ix path { stroke-dasharray: 1; stroke-dashoffset: 1; }
 .sticker .ix path { animation: ixDraw 1s cubic-bezier(.4,0,.2,1) .1s forwards; }
-.vinres__ch .ix path { animation: ixDraw .8s cubic-bezier(.4,0,.2,1) .1s forwards; } /* каналы в панели результата — прорисовка при показе шага */
+.rq__ch .ix path, .rq__ok .ix path { animation: ixDraw .8s cubic-bezier(.4,0,.2,1) .1s forwards; } /* каналы и «готово» в окне заявки — прорисовка при показе шага */
 .reveal.is-in .ix path { animation: ixDraw 1.1s cubic-bezier(.4,0,.2,1) .2s forwards; }
 .ix .ix-2 path { animation-delay: .5s !important; }
 @keyframes ixDraw { to { stroke-dashoffset: 0; } }

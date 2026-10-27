@@ -46,72 +46,17 @@
       <h1><span data-i18n="hero.h1"></span><br><span class="rot-box"><span class="rot" id="rot">Kia Carnival</span></span></h1>
       <p class="lead" data-i18n="hero.lead"></p>
 
-      <!-- Поиск «всплывает» в окно при фокусе в поле (liftSearch() в app.js): затемнение + место под карточку в hero -->
-      <div class="search-dim" id="searchDim" aria-hidden="true"></div>
-      <div class="search-ph" id="searchPh" hidden></div>
+      <!-- Поиск — только вход в окно заявки: одно поле, VIN и номер OE различаются по формату (app.js, «Первый экран») -->
       <div class="search" id="search">
-        <button type="button" class="search__x" id="searchX" data-i18n-aria="vr.close">×</button>
-        <div class="search__tabs" role="group" data-i18n-aria="search.dlg">
-          <button type="button" data-tab="vin" aria-pressed="true" data-i18n="tab.vin"></button>
-          <button type="button" data-tab="car" aria-pressed="false" data-i18n="tab.car"></button>
-          <button type="button" data-tab="oe" aria-pressed="false" data-i18n="tab.oe"></button>
-          <button type="button" data-tab="arena" aria-pressed="false" data-i18n="tab.arena"></button>
-        </div>
         <form class="search__box" id="searchForm" novalidate>
-          <input id="searchInput" autocomplete="off" aria-label="VIN / OE">
-          <button class="round" type="submit" aria-label="→">→</button>
+          <input id="searchInput" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="searchMsg" data-i18n-ph="search.ph" data-i18n-aria="search.ph">
+          <button class="round" type="submit" data-i18n-aria="search.go">→</button>
         </form>
-        <!-- «Po marce»: каскад Marka → Model → Rok (cascade() в app.js вставляет селекторы перед кнопкой) -->
-        <div class="cars cars--hero" id="searchCar" role="group" data-i18n-aria="tab.car" hidden>
-          <button class="round" type="button" id="searchCarGo" data-i18n-aria="car.go">→</button>
-        </div>
-        <div class="search__arena" id="searchArena" hidden>
-          <p data-i18n="search.arena.p"></p>
-          <button class="btn btn--sm" type="button" data-arena data-i18n="who.arena.cta"></button>
-        </div>
         <p class="search__msg" id="searchMsg" role="status"></p>
-        <!-- Результат VIN, «Po marce» и OE — два шага (рисует vinRes() в app.js; прототип одобрен 2026-10-27):
-             1 «Czego potrzebujesz?» — поле, подсказки ссылками, «Dalej»; 2 «Gdzie odpisać?» — три кнопки-канала, сразу отправляют -->
-        <div class="vinres" id="vinRes" hidden>
-          <div class="vinres__top"><p class="vinres__car" id="vrHead"></p><span class="vinres__step" id="vrStep"></span></div>
-          <div class="cars vinres__cars" id="vrCar" role="group" data-i18n-aria="tab.car" hidden></div>
-          <div class="vinres__pane" id="vrS1">
-            <label class="vinres__h" for="vrNote" id="vrNoteK"></label>
-            <input class="vinres__field" id="vrNote" autocomplete="off" aria-describedby="vrNoteMsg">
-            <p class="search__msg vinres__err" id="vrNoteMsg" role="status"></p>
-            <p class="vinres__sug" id="vrSug"></p>
-            <!-- Без VIN: VIN по желанию — за ссылкой «+ Mam VIN», та же проверка, что в поле первого экрана -->
-            <button type="button" class="vinres__link vinres__hasvin" id="vrHasVin" data-i18n="vr.hasvin" hidden></button>
-            <div class="vinres__vin-box" id="vrVinBox" hidden>
-              <input class="vinres__field is-vin" id="vrVin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="vr.vin" data-i18n-aria="vr.vin">
-              <p class="search__msg vinres__err" id="vrVinMsg" role="status"></p>
-            </div>
-            <button type="button" class="btn vinres__go" id="vrDalej"><span data-i18n="vr.dalej"></span> <span aria-hidden="true">›</span></button>
-          </div>
-          <div class="vinres__pane" id="vrS2" hidden>
-            <button type="button" class="vinres__link vinres__back" id="vrBack"></button>
-            <h3 class="vinres__h" id="vrWhereK" data-i18n="vr.where" tabindex="-1"></h3>
-            <div class="vinres__chs" role="group" aria-labelledby="vrWhereK">
-              <a class="btn vinres__ch" data-ch="wa"><span class="ix" data-ix="whatsapp"></span><span data-i18n="vr.go.wa"></span> <span aria-hidden="true">›</span></a>
-              <a class="vinres__ch vinres__ch--light" data-ch="tg"><span class="ix" data-ix="send-2"></span>Telegram <span aria-hidden="true">›</span></a>
-              <a class="vinres__ch vinres__ch--light" data-ch="mail"><span class="ix" data-ix="sms"></span>E-mail <span aria-hidden="true">›</span></a>
-            </div>
-            <!-- «Pilne» и справа «Wolę formularz» — в одну строку, так шаг 2 помещается на 1280×720 без прокрутки -->
-            <div class="vinres__opts">
-              <label class="vinres__urgent"><input type="checkbox" id="vrUrgent"> <span data-i18n="vr.urgent"></span></label>
-              <button type="button" class="vinres__link vinres__form" id="vrForm" data-i18n="vr.form"></button>
-            </div>
-            <p class="vinres__hint" id="vrNext"></p>
-          </div>
-          <div class="vinres__pane vinres__done" id="vrDone" hidden>
-            <h3 class="vinres__h" id="vrDoneT" tabindex="-1"></h3>
-            <p class="vinres__hint" id="vrDoneP" role="status"></p>
-            <button type="button" class="vinres__link" id="vrAgain" data-i18n="vr.again"></button>
-          </div>
-        </div>
-        <p class="search__alt" id="searchAlt" data-i18n="hero.alt"></p>
-        <!-- Где взять VIN — на месте строки «albo napisz», пока поле VIN в фокусе (высота карточки не меняется) -->
-        <p class="search__alt" id="searchWhere" data-i18n="search.vin.where" hidden></p>
+        <p class="search__alt">
+          <button type="button" class="search__link" data-req="car" data-i18n="search.novin"></button>
+          <button type="button" class="search__link" data-req="arena" data-i18n="search.arena"></button>
+        </p>
       </div>
       <!-- Марки: светло-серые логотипы без подписей; клик фильтрует популярные модели -->
       <div class="brands" id="brands"></div>
@@ -358,49 +303,13 @@
     </div>
   </section>
 
-  <!-- Заявка по VIN. Без JS форма стоит здесь, и ссылки href="#vin" ведут сюда; с JS панель переносится
-       в модальное окно #vinDlg (его открывают все кнопки «Wyślij VIN», «Zapytaj», «Zamów zestaw»…), а секция прячется. -->
+  <!-- Без JS — простой запасной путь: написать нам. С JS секция прячется, заявку ведёт окно #vinDlg.
+       Адреса здесь — те же заглушки, что в начале app.js; менять в обоих местах. -->
   <section id="vin" class="section">
-    <div class="wrap wrap--narrow" id="vinPanel">
-      <div class="dlg__head">
-        <h2 id="vinTitle" data-i18n="form.h2"></h2>
-        <p class="muted" data-i18n="form.note"></p>
-      </div>
-      <!-- В модалке форма — колонка: поля прокручиваются (.dlg__fields), низ с кнопкой (.dlg__foot) всегда на виду -->
-      <form id="vinForm" class="form" novalidate>
-        <div class="dlg__fields">
-          <label><span data-i18n="form.vin"></span>
-            <input name="vin" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vinHint" data-i18n-ph="form.vin.ph">
-            <small class="hint" id="vinHint" data-i18n="form.vin.hint"></small>
-          </label>
-          <!-- Авто — вместо VIN, если его нет под рукой (нужно VIN или марка + модель) -->
-          <div class="form__car" role="group" aria-labelledby="carFormK">
-            <span class="form__k" id="carFormK" data-i18n="form.car"></span>
-            <div class="cars" id="carForm"></div>
-          </div>
-          <label class="inline form__opt"><input type="checkbox" name="arena"> <span data-i18n="form.arena"></span></label>
-          <label><span data-i18n="form.parts"></span> <textarea name="parts" rows="3" data-i18n-ph="form.parts.ph"></textarea></label>
-          <div class="tags" id="formCats" role="group" data-i18n-aria="vr.cats"></div>
-          <div class="form__when" role="group" aria-labelledby="formWhenK"><span class="form__k" id="formWhenK" data-i18n="vr.when"></span><div class="tags" id="formWhen"></div></div>
-          <div class="form__row">
-            <label><span data-i18n="form.contact"></span> <input name="contact" type="tel" autocomplete="tel" data-i18n-ph="form.contact.ph"></label>
-            <label><span data-i18n="form.email"></span> <input name="email" type="email" autocomplete="email" data-i18n-ph="form.email.ph"></label>
-          </div>
-          <label class="inline consent"><input type="checkbox" name="rodo"> <span data-i18n="form.consent"></span></label>
-        </div>
-        <div class="dlg__foot form__send">
-          <p class="form__msg" id="formMsg" role="status"></p>
-          <button class="btn form__submit" type="submit"><span data-i18n="form.submit"></span> <span aria-hidden="true">›</span></button>
-          <p class="hint form__more" data-i18n="form.more"></p>
-        </div>
-      </form>
-      <!-- Готово: письмо открыто. Показываем вместо формы. -->
-      <div class="dlg__ok" id="vinOk" hidden>
-        <span class="ix ix--perk" data-ix="box-tick"></span>
-        <h3 id="vinOkTitle" tabindex="-1" data-i18n="form.ok.h"></h3>
-        <p class="muted" data-i18n="msg.ok"></p>
-        <button class="btn" type="button" data-dlg-close data-i18n="form.ok.close"></button>
-      </div>
+    <div class="wrap wrap--narrow">
+      <h2 data-i18n="rq.nojs.h">Napisz do nas</h2>
+      <p class="muted" data-i18n="rq.nojs.p">Wyślij VIN i listę części — odpiszemy z ceną w ciągu 24 h.</p>
+      <p class="nojs__btns"><a class="btn" href="https://wa.me/48000000000">WhatsApp</a> <a class="btn btn--ghost" href="mailto:zamowienia@example.pl">E-mail</a></p>
     </div>
   </section>
   </main>
@@ -419,11 +328,17 @@
     </div>
   </footer>
 
-  <!-- Модальное окно заявки: панель #vinPanel переносит сюда app.js -->
-  <dialog class="dlg" id="vinDlg" aria-labelledby="vinTitle">
-    <button class="dlg__x" type="button" data-dlg-close data-i18n-aria="form.close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
+  <!-- Окно заявки «Zapytanie» (прототип одобрен 2026-10-27): 3 шага + «готово», содержимое шага рисует rqRender() в app.js.
+       Сверху строка: «‹ Wstecz» · «Krok N z 3» · крестик. Его открывают все входы: поиск в hero, «Wyślij VIN», «Zapytaj», «Zamów zestaw»… -->
+  <dialog class="dlg rq" id="vinDlg" aria-labelledby="rqH">
+    <div class="rq__bar">
+      <button type="button" class="rq__back" id="rqBack"><span aria-hidden="true">‹</span> <span data-i18n="rq.back"></span></button>
+      <span class="rq__step" id="rqStep"></span>
+      <button class="dlg__x" type="button" data-dlg-close data-i18n-aria="rq.close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="rq__body" id="rqBody"></div>
   </dialog>
 
   <script src="icons.js"></script>

@@ -32,27 +32,28 @@ const POPULAR = [
   { key: "grandeur", brand: "hyundai", name: "Hyundai Grandeur", box: [0.245, 0.82, 0.505], vitrine: null },
 ];
 
-// Распознавание модели по VIN — первый экран, вкладка «Po VIN» (vinDecode() в app.js).
+// Распознавание марки и модели по VIN — шаг 1 окна заявки (vinDecode() в app.js).
 // Марка — по WMI (знаки 1–3), надёжно: коды производителя Hyundai Motor Group по ISO 3780
 //   KNA, KNC, KND — Kia; KMH, KM8, KMF, KMJ — Hyundai; KMT, KMU — Genesis
 //   (у Genesis G80 2017–2019 модельных лет WMI ещё был KMH — поэтому марку не используем как запрет, только как подсказку).
 // Модель — по знакам 1–4 (WMI + первый знак VDS). Подтверждено только по экспортным VIN (рынок США, 2022–2024:
 //   clearvin.com, forcar.org, epicvin.com): KNDN… — Carnival KA4, KM8R… — Palisade.
 // У машин для внутреннего рынка Кореи (KDM) коды VDS могут отличаться, поэтому модель всегда показываем вопросом
-//   «zgadza się?», а без совпадения сразу предлагаем выбрать модель. K8, Sorento, G80, GV80, Grandeur не угадываем:
+//   «To Twoje auto?», а без совпадения сразу предлагаем выбрать модель. K8, Sorento, G80, GV80, Grandeur не угадываем:
 //   надёжных примеров VIN не нашли. Контрольную цифру (9-й знак) не проверяем — у KDM-машин на неё нельзя полагаться.
 const VIN_BRANDS = { KNA: "kia", KNC: "kia", KND: "kia", KMH: "hyundai", KM8: "hyundai", KMF: "hyundai", KMJ: "hyundai", KMT: "genesis", KMU: "genesis" };
 // Модельный год — 10-й знак VIN (стандарт ISO 3779 / NHTSA: без I, O, Q, U, Z и 0; цикл 30 лет, берём 2010–2027).
 // ВНИМАНИЕ: у KDM-машин (внутренний рынок Кореи) 10-й знак может не следовать этому стандарту — проверить на реальных
-// VIN клиентов Arena; не подтвердится — убрать год из узнавания (vinYear() в app.js вернёт null, если таблицу очистить).
+// VIN клиентов Arena. Пока не проверено, год нигде не показываем и не спрашиваем — таблица не используется.
 const VIN_YEARS = "ABCDEFGHJKLMNPRSTV"; // A = 2010 … T = 2026, V = 2027
 const VIN_MODELS = [
   { prefix: "KNDN", model: "carnival" },
   { prefix: "KM8R", model: "palisade" },
 ];
 
-// Выбор авто без VIN — каскад «Marka → Model → Rok» (вкладка «Po marce», панель VIN, форма заявки; cascade() в app.js).
-// Марка → модели → поколения. Ключи моделей общие с POPULAR и VIN_MODELS; vitrine — ключ модели в витрине (детали в панели).
+// Марки и модели для шага 1 окна заявки («Kia — który model?»), без VIN или когда VIN узнал только марку.
+// Марка → модели → поколения. Ключи моделей общие с POPULAR и VIN_MODELS; vitrine — ключ модели в витрине (подсказки на шаге 2).
+// Поколения (gens) окно пока не использует — год не спрашиваем; оставлены на будущее.
 // Поколение: code — как подписываем (FL — рестайлинг, в Корее «PE»), from/to — годы продаж в Корее (to нет — выпускается).
 // Год смены поколения стоит в обоих: машина этого года может быть любой, человек выберет по подписи.
 // Источники: docs/MODEL_REFERENCES.md (Carnival, K8, Sorento, Palisade, Grandeur, G80, GV80 — проверено 2026-10-26),
@@ -101,30 +102,12 @@ const CATEGORIES = {
   service: { pl: "Serwis", en: "Service" },
 };
 
-// Чипы «Czego potrzebujesz?» в панели результата и в форме заявки — одинаковые для любой модели (мультивыбор;
-// «Nie wiem» — взаимоисключающий с остальными). Список — Дмитрий, 2026-10-27.
-const NEEDS = {
-  body: { pl: "Karoseria", en: "Body" },
-  lights: { pl: "Oświetlenie", en: "Lighting" },
-  brakes: { pl: "Hamulce", en: "Brakes" },
-  suspension: { pl: "Zawieszenie", en: "Suspension" },
-  interior: { pl: "Wnętrze", en: "Interior" },
-  electrics: { pl: "Elektryka", en: "Electrics" },
-  service: { pl: "Filtry i serwis", en: "Filters & service" },
-  unsure: { pl: "Nie wiem", en: "Not sure" },
-};
-// Подсказки «Często szukane:» под полем панели результата — у моделей без витрины (у моделей с витриной — её 3 детали).
+// Подсказки «Często szukane:» на шаге «Czego potrzebujesz?» окна заявки — у моделей без витрины (у моделей с витриной — её 3 детали).
 const COMMON_PARTS = [
   { pl: "Klocki hamulcowe", en: "Brake pads" },
   { pl: "Reflektor", en: "Headlight" },
   { pl: "Lusterko", en: "Mirror" },
 ];
-// Чипы NEEDS и срочность URGENCY — только в модалке заявки; в панели результата срочность — галочка «Pilne» (URGENCY.express.msg).
-// «Kiedy potrzebujesz?» — один выбор, необязательный; в сообщение строкой «Dostawa: ekspres / morzem».
-const URGENCY = {
-  express: { pl: "Pilne — ekspres", en: "Urgent — express", msg: { pl: "ekspres", en: "express" } },
-  sea: { pl: "Mogę poczekać — taniej", en: "Can wait — cheaper", msg: { pl: "morzem", en: "sea" } },
-};
 
 // Повторяющиеся названия деталей.
 const N = {
