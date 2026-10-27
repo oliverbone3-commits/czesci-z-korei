@@ -109,6 +109,37 @@ const rotTimer = setInterval(() => {
   rotLeft--;
 }, 3200);
 
+// Параллакс первого экрана: машины отстают от прокрутки и чуть расходятся, наклейки уходят быстрее (ближе к зрителю),
+// текст почти на месте и гаснет к низу экрана; «Popularne modele» наезжает сверху (styles.css).
+// Только transform/opacity, один кадр rAF на прокрутку и только пока hero виден; на телефоне слабее; «уменьшить движение» — нет.
+const heroMore = $("heroMore");
+if (!REDUCED) {
+  const sides = hero.querySelectorAll(".hero__side"), heroIn = hero.querySelector(".hero__in"), facts = hero.querySelector(".facts");
+  let heroSeen = true, queued = false;
+  const parallax = () => {
+    queued = false;
+    const h = hero.offsetHeight, y = Math.min(Math.max(scrollY, 0), h), p = y / h;
+    // телефон: первый экран выше окна, текст не гасим — только машина под поиском чуть отстаёт
+    if (innerWidth <= 960) {
+      sides.forEach((el) => (el.style.transform = `translate3d(0, ${y * 0.1}px, 0)`));
+      facts.style.transform = heroIn.style.transform = heroIn.style.opacity = "";
+      return;
+    }
+    sides.forEach((el, i) => (el.style.transform = `translate3d(${(i ? 1 : -1) * y * 0.08}px, ${y * 0.2}px, 0)`));
+    facts.style.transform = innerWidth >= 1200 ? `translate3d(0, ${-y * 0.12}px, 0)` : "";
+    heroIn.style.transform = `translate3d(0, ${y * 0.08}px, 0)`;
+    heroIn.style.opacity = Math.max(0, 1 - Math.max(0, p - 0.25) / 0.55).toFixed(3);
+  };
+  const onScroll = () => {
+    if (scrollY > 8) heroMore.classList.add("is-gone");
+    if (heroSeen && !queued) { queued = true; requestAnimationFrame(parallax); }
+  };
+  new IntersectionObserver((en) => { heroSeen = en[0].isIntersecting; if (heroSeen) onScroll(); }).observe(hero);
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll, { passive: true });
+  onScroll();
+} else heroMore.remove();
+
 // Одно поле: VIN (17 знаков, без I/O/Q) или номер OE Mobis (5 цифр и 3–7 знаков: 51712-R0150). Пробелы и дефисы не важны.
 // Enter / «→»: VIN — окно заявки на шаге «To Twoje auto?», OE — деталь в заявку (из витрины — с названием).
 // Ошибка формата — под полем, окно не открывается.
