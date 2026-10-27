@@ -196,8 +196,15 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .search__alt a { font-weight: 700; color: var(--green); text-decoration: none; }
 /* «VIN poprawny» — только для скринридера: панель VIN выпадает поверх, высота первого экрана не должна меняться */
 .search__msg.is-ok { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-/* VIN в поле поиска — моноширинный верхний регистр, как в форме (плейсхолдер — обычным шрифтом) */
-.search__box input.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
+/* «Nie masz VIN? Wybierz model» — второй вход в ту же панель; ссылка .vinres__link (44 px по высоте) под полем.
+   При открытой панели не нужна. На телефоне — главный сценарий: во всю ширину, белым, крупнее по высоте. */
+.search .search__novin { display: block; margin: var(--sp-2) auto 0; }
+.search__novin[hidden], .search.is-lifted:has(.vinres:not([hidden])) .search__novin { display: none; }
+@media (max-width: 640px) {
+  .search .search__novin { width: 100%; min-height: 48px; color: #fff; text-decoration-color: rgba(255,255,255,.6); }
+}
+/* VIN в поле поиска и в необязательном поле панели — моноширинный верхний регистр, как в форме (плейсхолдер — обычным шрифтом) */
+.search__box input.is-vin:not(:placeholder-shown), .vinres__note input.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
 
 /* Результат VIN под полем поиска (2026-10-26): модель → детали → канал → отправка, без формы.
    Свой компонент первого экрана на тёмном: строки деталей — тёмное стекло как у наклеек, но без наклона;
@@ -236,6 +243,9 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .vinres__note input { font: inherit; font-size: var(--fs-ui); font-weight: 400; color: var(--ink); background: #fff; border: 1px solid var(--field-border);
   border-radius: 12px; min-height: 48px; padding: 0 var(--sp-4); }
 .vinres__note input:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+.vinres__note input[aria-invalid="true"] { border-color: #ffd38a; }
+.vinres__note > label { cursor: pointer; }
+.vinres__err { margin: 0; text-align: left; }
 /* Канал и отправка — в одну строку на широком экране; ≤640 — друг под другом, кнопка на всю ширину */
 .vinres__row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--sp-3); }
 .vinres .seg { display: flex; margin: 0; }
@@ -785,6 +795,10 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .form__msg.is-error { color: #b3261e; }
 .form[hidden] { display: none; }
 /* «Kupiłem auto w Arena Auto» — опция плиткой; отмечена — бледно-зелёная, поле VIN приглушено (оно не обязательно) */
+/* Модель вместо VIN — светлый .pick на всю ширину поля; список не длиннее окна */
+.form__pick .pick__btn { width: 100%; }
+.form__pick .pick__v { margin-right: auto; }
+.form__pick .pick__list { max-height: min(260px, 40vh); overflow-y: auto; overscroll-behavior: contain; }
 .form .form__opt { padding: var(--sp-3) var(--sp-4); border-radius: 12px; background: var(--canvas); cursor: pointer; transition: background .2s; }
 .form .form__opt:has(:checked) { background: var(--green-pale); }
 .form:has([name=arena]:checked) label:has([name=vin]) { opacity: .55; }

@@ -48,6 +48,7 @@ function applyLang() {
   $("searchMsg").textContent = "";
   setTab(state.tab);
   vinRes();
+  pickForm();
   messengerLinks();
   pauseLabel();
   delivery();
@@ -109,6 +110,7 @@ function setTab(tab) {
   $("searchArena").hidden = tab !== "arena";
   $("searchInput").placeholder = t(tab === "oe" ? "search.oe.ph" : "search.vin.ph");
   $("searchInput").classList.toggle("is-vin", tab === "vin");
+  $("searchNoVin").hidden = tab !== "vin";
   searchErr("");
   if (changed) vinClose();
 }
@@ -158,13 +160,17 @@ $("searchInput").addEventListener("input", (e) => {
   searchErr(err ? t(err) : "");
   if (!lifted) return;
   if (!err && vin.length === 17) { if (!vr.open || vr.code !== vin) vinOpen({ kind: "vin", code: vin }, false); }
-  else vinClose();
+  else if (vr.kind !== "model") vinClose(); // панель «без VIN» не зависит от поля
 });
+// Второй вход — без VIN: та же панель и то же раскрытие, сразу выбор модели (как у нераспознанного VIN).
+$("searchNoVin").addEventListener("click", () => vinOpen({ kind: "model", code: "" }, true));
 
 /* ---------- Результат VIN: модель → детали → канал → отправка ---------- */
 
 // Модель угадываем по таблице VIN_BRANDS / VIN_MODELS (data.js) и всегда переспрашиваем; не нашли — выбор из POPULAR.
-const vr = { open: false, kind: "vin", code: "", brand: null, model: null, asked: true, picked: new Set(), ch: "wa", note: false };
+// kind: "vin" — по VIN из поля, "oe" — номер не из витрины, "model" — без VIN (человек выбирает модель сам;
+// VIN можно дописать внизу панели — vinOpt(), иначе в сообщении «Model: … (bez VIN)»).
+const vr = { open: false, kind: "vin", code: "", brand: null, model: null, asked: true, picked: new Set(), ch: "wa", note: false, vinErr: null };
 const popular = (k) => POPULAR.find((m) => m.key === k);
 const carName = (k) => (k === "other" ? t("vr.other") : popular(k).full || popular(k).name);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -185,8 +191,8 @@ function vinOpen({ kind, code }, focus) {
   // Тот же VIN/OE снова (панель закрыли и открыли) — выбор модели, галочки и «что ещё» сохраняем.
   if (kind !== vr.kind || code !== vr.code) {
     const d = kind === "vin" ? vinDecode(code) : { brand: null, model: null };
-    Object.assign(vr, { kind, code, brand: d.brand, model: d.model, asked: !d.model, picked: new Set(), note: kind === "oe" });
-    $("vrNote").value = "";
+    Object.assign(vr, { kind, code, brand: d.brand, model: d.model, asked: !d.model, picked: new Set(), note: kind === "oe", vinErr: null });
+    $("vrNote").value = $("vrVin").value = "";
   }
   vr.open = true;
   $("vrMsg").textContent = "";
@@ -301,7 +307,7 @@ document.addEventListener("keydown", (e) => {
 function vinRes() {
   $("vinRes").hidden = !vr.open;
   if (!vr.open) return liftSize();
-  const mask = `<span class="vinres__vin">VIN …${vr.code.slice(-6)}</span>`;
+  const mask = vr.kind === "vin" ? `<span class="vinres__vin">VIN …${vr.code.slice(-6)}</span>` : "";
   const brand = BRANDS.find((b) => b.key === vr.brand);
   let head;
   if (vr.kind === "oe") head = `<p class="vinres__q">${t("vr.oe").replace("{oe}", `<b>${esc(vr.code)}</b>`)}</p>`;
@@ -310,6 +316,7 @@ function vinRes() {
       <button type="button" class="vinres__link" data-vr="no">${t("vr.no")}</button></div>`;
   else if (vr.model) head = `<p class="vinres__q"><b>${carName(vr.model)}</b>${mask}</p>
       <button type="button" class="vinres__link" data-vr="no">${t("vr.change")}</button>`;
+  else if (vr.kind === "model") head = `<p class="vinres__q">${t("vr.which.n")}</p>`;
   else head = `<p class="vinres__q">${brand ? t("vr.which.b").replace("{b}", brand.name) : t("vr.which")}${mask}</p>`;
   $("vrHead").innerHTML = head;
   // Выбор модели — общий селектор .pick; марку из VIN ставим первой.
@@ -333,6 +340,9 @@ function vinRes() {
   $("vrNoteBox").hidden = !vr.note;
   $("vrNoteK").textContent = t(vr.kind === "oe" ? "vr.oe.note" : "vr.note");
   $("vrNote").placeholder = t(vr.kind === "oe" ? "vr.oe.ph" : "vr.note.ph");
+  // Без VIN — после выбора модели внизу необязательное поле VIN
+  $("vrVinBox").hidden = vr.kind !== "model" || !vr.model;
+  $("vrVinMsg").textContent = vr.vinErr ? t(vr.vinErr) : "";
   vinChannel();
   liftSize(); // содержимое панели сменилось — окно плавно подстраивается
 }
@@ -370,6 +380,17 @@ $("vrParts").addEventListener("change", (e) => {
   vinChannel();
 });
 $("vrNote").addEventListener("input", vinChannel);
+const vinOpt = () => { const { vin, err } = vinCheck($("vrVin").value); return !err && vin.length === 17 ? vin : ""; };
+function vrVinErr(blur) {
+  const { vin, err } = vinCheck($("vrVin").value);
+  vr.vinErr = err || (blur && vin && vin.length < 17 ? "vr.vin.short" : null);
+  $("vrVinMsg").textContent = vr.vinErr ? t(vr.vinErr) : "";
+  if (vr.vinErr) $("vrVin").setAttribute("aria-invalid", "true"); else $("vrVin").removeAttribute("aria-invalid");
+  vinChannel();
+  liftSize();
+}
+$("vrVin").addEventListener("input", () => vrVinErr(false));
+$("vrVin").addEventListener("blur", () => vrVinErr(true));
 $("vrCh").addEventListener("click", (e) => {
   const b = e.target.closest("[data-ch]");
   if (!b) return;
@@ -383,8 +404,12 @@ function vinLines() {
   const parts = vinItems().filter((it) => vr.picked.has(it.oe)).map((it) => `– ${tr(it.name)} (OE ${it.oe})`);
   const note = $("vrNote").value.trim();
   if (vr.kind === "oe") return [t("msg.hello"), `OE: ${vr.code}`, note ? `${t("vr.msg.car")}: ${note}` : null, `Lang: ${lang}`];
-  return [t("msg.hello"), `VIN: ${vr.code}`, vr.model ? `${t("vr.msg.car")}: ${carName(vr.model)}` : null,
-    `${t("mail.parts")}:\n${parts.length ? parts.join("\n") : "– " + t("vr.msg.byvin")}`,
+  // Без VIN — «Model: Kia K8 (bez VIN)», чтобы было видно, что VIN надо спросить.
+  const vin = vr.kind === "vin" ? vr.code : vinOpt();
+  const car = vr.model ? carName(vr.model) : t("vr.other");
+  return [t("msg.hello"), vin ? `VIN: ${vin}` : `${t("vr.msg.model")}: ${car} (${t("vr.msg.novin")})`,
+    vin && vr.model ? `${t("vr.msg.car")}: ${car}` : null,
+    `${t("mail.parts")}:\n${parts.length ? parts.join("\n") : "– " + t(vin ? "vr.msg.byvin" : "vr.msg.bymodel")}`,
     note ? `${t("vr.msg.more")}: ${note}` : null, `Lang: ${lang}`];
 }
 const vinText = () => vinLines().filter(Boolean).join("\n");
@@ -393,7 +418,7 @@ const vinText = () => vinLines().filter(Boolean).join("\n");
 function vinChannel() {
   document.querySelectorAll("#vrCh [data-ch]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ch === vr.ch));
   const go = $("vrGo"), text = vinText();
-  const subject = `${t("mail.subject")} ${vr.code}`;
+  const subject = `${t("mail.subject")} ${vr.code || vinOpt() || (vr.model ? carName(vr.model) : "")}`.trim();
   go.href = vr.ch === "wa" ? `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`
     : vr.ch === "tg" ? `https://t.me/${TELEGRAM_USER}`
     : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
@@ -419,11 +444,14 @@ $("vrGo").addEventListener("click", () => {
   const msg = $("vrMsg");
   const say = (text) => { msg.textContent = text; liftSize(); };
   if (vr.ch !== "tg") return say(t(vr.ch === "wa" ? "vr.sent.wa" : "vr.sent.mail"));
-  copyText(vinText()).then(() => say(t("vr.sent.tg")), () => say(t("vr.sent.tg.fail").replace("{v}", vr.code)));
+  const v = vr.kind === "model" ? vinOpt() : vr.code;
+  copyText(vinText()).then(() => say(t("vr.sent.tg")), () => say(v ? t("vr.sent.tg.fail").replace("{v}", v) : t("vr.sent.tg.fail.m")));
 });
 // Запасной путь — обычная форма заявки с уже подставленными VIN, моделью и деталями.
 $("vrForm").addEventListener("click", () => {
-  if (vr.kind === "vin") form.vin.value = vr.code;
+  const vin = vr.kind === "vin" ? vr.code : vr.kind === "model" ? vinOpt() : "";
+  if (vin) form.vin.value = vin;
+  if (vr.model) { formModel = vr.model; pickForm(); }
   const note = $("vrNote").value.trim();
   if (vr.kind === "oe") addToParts(`OE ${vr.code}${note ? " — " + note : ""}`);
   else {
@@ -1113,7 +1141,21 @@ dlg.addEventListener("focusin", (e) => {
   if (e.target.matches("input, textarea")) setTimeout(() => e.target.scrollIntoView({ block: "nearest" }), 300);
 });
 
-// Открыть заявку. Фокус — на первое поле, которое ещё надо заполнить (VIN → детали → телефон).
+// Модель вместо VIN (нет под рукой): тот же селектор .pick, что в панели первого экрана. Нужно хотя бы одно из двух.
+let formModel = null;
+const pickForm = picker("pickForm", () => t("form.model"),
+  () => [...[...POPULAR].sort((a, b) => a.brand.localeCompare(b.brand)).map((m) => [m.key, m.full || m.name]), ["other", t("vr.other")]],
+  () => formModel,
+  (k) => {
+    formModel = k;
+    pickForm();
+    // «Podaj VIN albo model» больше не актуально
+    if (!norm(form.vin.value)) { form.vin.removeAttribute("aria-invalid"); $("formMsg").textContent = ""; }
+  },
+  () => t("form.model.ph"));
+form.addEventListener("reset", () => { formModel = null; pickForm(); });
+
+// Открыть заявку. Фокус — на первое поле, которое ещё надо заполнить (VIN или модель → детали → телефон).
 function openForm() {
   dropSearch(false); // «Wolę formularz», «klient Arena» — окно поиска уступает место форме
   if (!dlg.open) {
@@ -1123,7 +1165,7 @@ function openForm() {
     dlg.showModal();
     fitDialog();
   }
-  const vinOk = form.arena.checked || norm(form.vin.value).length === 17;
+  const vinOk = form.arena.checked || norm(form.vin.value).length === 17 || !!formModel;
   const parts = form.parts.value.trim();
   const field = !vinOk ? form.vin : !parts || parts.endsWith(":") ? form.parts : form.contact;
   field.focus();
@@ -1187,16 +1229,20 @@ form.addEventListener("submit", (e) => {
   const msg = $("formMsg");
   const vin = norm(form.vin.value);
   const arena = form.arena.checked;
-  if (!arena && vin.length !== 17) return fail(form.vin, "msg.vin");
+  // VIN или модель: начатый VIN должен быть полным; пустой — достаточно модели
+  if (!arena && vin && vin.length !== 17) return fail(form.vin, "msg.vin");
+  if (!arena && !vin && !formModel) return fail(form.vin, "msg.vinmodel");
   if (!form.parts.value.trim()) return fail(form.parts, "msg.fill");
   if (!form.contact.value.trim()) return fail(form.contact, "msg.fill");
   const email = form.email.value.trim();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(form.email, "msg.email");
   if (!form.rodo.checked) return fail(form.rodo, "msg.rodo");
   msg.classList.remove("is-error");
-  const body = [`VIN: ${vin || "—"}`, arena ? t("mail.arena") : null, `${t("mail.parts")}:\n${form.parts.value}`,
+  const car = formModel ? carName(formModel) : "";
+  const body = [vin || !car ? `VIN: ${vin || "—"}` : `${t("vr.msg.model")}: ${car} (${t("vr.msg.novin")})`,
+    vin && car ? `${t("vr.msg.model")}: ${car}` : null, arena ? t("mail.arena") : null, `${t("mail.parts")}:\n${form.parts.value}`,
     `${t("form.contact")}: ${form.contact.value}`, email ? `E-mail: ${email}` : null, `Lang: ${lang}`].filter(Boolean).join("\n\n");
-  const subject = `${t("mail.subject")} ${vin || t("mail.arena")}`;
+  const subject = `${t("mail.subject")} ${vin || car || t("mail.arena")}`;
   window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   msg.textContent = "";
   form.querySelectorAll("[aria-invalid]").forEach((f) => f.removeAttribute("aria-invalid"));

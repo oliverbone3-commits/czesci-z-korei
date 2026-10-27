@@ -64,12 +64,20 @@
           <button class="btn btn--sm" type="button" data-arena data-i18n="who.arena.cta"></button>
         </div>
         <p class="search__msg" id="searchMsg" role="status"></p>
+        <!-- Второй вход — без VIN: та же панель результата, сразу с выбором модели -->
+        <button type="button" class="vinres__link search__novin" id="searchNoVin" data-i18n="search.novin"></button>
         <!-- Результат VIN: модель → детали → канал → отправка, без формы (рисует vinRes() в app.js) -->
         <div class="vinres" id="vinRes" hidden>
           <div class="vinres__head" id="vrHead"></div>
           <div class="pick vinres__pick" id="pickVin" hidden></div>
           <div id="vrParts"></div>
           <label class="vinres__note" id="vrNoteBox" hidden><span id="vrNoteK"></span><input id="vrNote" autocomplete="off"></label>
+          <!-- Без VIN: VIN по желанию — та же проверка, что в поле первого экрана -->
+          <div class="vinres__note" id="vrVinBox" hidden>
+            <label for="vrVin" data-i18n="vr.vin"></label>
+            <input id="vrVin" class="is-vin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="search.vin.ph">
+            <p class="search__msg vinres__err" id="vrVinMsg" role="status"></p>
+          </div>
           <div class="vinres__send">
             <div class="vinres__sendhead">
               <p class="vinres__k" id="vrChK" data-i18n="vr.ch"></p>
@@ -348,6 +356,8 @@
             <input name="vin" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vinHint" data-i18n-ph="form.vin.ph">
             <small class="hint" id="vinHint" data-i18n="form.vin.hint"></small>
           </label>
+          <!-- Модель — вместо VIN, если его нет под рукой (нужно хотя бы одно из двух) -->
+          <div class="pick form__pick" id="pickForm"></div>
           <label class="inline form__opt"><input type="checkbox" name="arena"> <span data-i18n="form.arena"></span></label>
           <label><span data-i18n="form.parts"></span> <textarea name="parts" rows="3" data-i18n-ph="form.parts.ph"></textarea></label>
           <div class="form__row">
