@@ -183,7 +183,9 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .search__tabs button { font: inherit; font-size: var(--fs-ui); font-weight: 700; color: var(--on-black); background: none; border: 0;
   padding: var(--sp-2) var(--sp-3); min-height: 44px; cursor: pointer; border-bottom: 2px solid transparent; }
 .search__tabs button[aria-pressed="true"] { color: #fff; border-color: #fff; }
+@media (max-width: 640px) { .search__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-2); } } /* 4 вкладки — 2×2, а не 3+1 */
 .search__box { display: flex; align-items: center; background: #fff; border-radius: 999px; padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-5); }
+.search__box[hidden] { display: none; } /* «Po marce» и «Klient Arena» — без поля ввода */
 .search__box:focus-within { box-shadow: 0 0 0 3px var(--green), 0 0 0 6px var(--black-2); }
 .search__box input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: var(--fs-body); min-height: 44px; color: var(--ink); background: none; }
 .round { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--green); color: var(--green-ink);
@@ -206,6 +208,33 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 /* VIN в поле поиска и в необязательном поле панели — моноширинный верхний регистр, как в форме (плейсхолдер — обычным шрифтом) */
 .search__box input.is-vin:not(:placeholder-shown), .vinres__note input.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
 
+/* Каскад «Marka → Model → Rok» (2026-10-27): вкладка «Po marce», панель VIN, форма заявки. Три селектора .pick
+   в ряд, подпись над значением (как .pick на телефоне); «Inny model» — поле на месте года. В первом экране справа «→». */
+.cars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); text-align: left; }
+.cars[hidden], .cars > [hidden] { display: none; }
+.cars--hero { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: center; }
+.cars .pick__btn { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: 100%; min-height: 56px; padding: var(--sp-2) var(--sp-3); text-align: left; column-gap: var(--sp-2); }
+.cars .pick__k { grid-row: 1; font-size: var(--fs-sm); line-height: 1.2; }
+.cars .pick__v { grid-row: 2; line-height: 1.3; }
+.cars .pick__chev { grid-row: 1 / 3; grid-column: 2; margin: 0; }
+.cars .pick__list { max-height: min(300px, 45vh); overflow-y: auto; overscroll-behavior: contain; }
+.cars .pick:nth-child(3) .pick__list { left: auto; right: 0; }
+.cars__other { min-width: 0; min-height: 56px; padding: 0 var(--sp-4); font: inherit; font-size: var(--fs-ui); color: var(--ink); background: #fff;
+  border: 1px solid var(--field-border); border-radius: 12px; }
+.cars__other:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+/* окно поиска поднято — каскад внизу окна (панель над ним), списки раскрываются вверх */
+.search.is-lifted .cars--hero .pick__list { top: auto; bottom: calc(100% + var(--sp-2)); }
+@media (max-width: 640px) {
+  /* марка | модель, ниже год | «→» (в форме и панели — год на всю ширину) */
+  .cars { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cars > :nth-child(3), .cars > .cars__other { grid-column: 1 / -1; }
+  .cars--hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .cars--hero > :nth-child(2) { grid-column: 2 / -1; }
+  .cars--hero > :nth-child(3), .cars--hero > .cars__other { grid-column: 1 / 3; }
+  .cars .pick:nth-child(3) .pick__list { left: 0; right: auto; }
+  .search.is-lifted .cars--hero .pick__list { top: calc(100% + var(--sp-2)); bottom: auto; } /* на телефоне каскад наверху */
+}
+
 /* Результат VIN под полем поиска (2026-10-26): модель → детали → канал → отправка, без формы.
    Свой компонент первого экрана на тёмном: строки деталей — тёмное стекло как у наклеек, но без наклона;
    из базовых — .btn, .badge, .pick (выбор модели), .seg (канал). */
@@ -221,10 +250,6 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .vinres__link { font: inherit; font-size: var(--fs-ui); font-weight: 700; color: var(--on-black); background: none; border: 0; padding: 0; min-height: 44px;
   cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
 .vinres__link:hover { color: #fff; text-decoration-color: currentColor; }
-.vinres__pick .pick__btn { width: min(100%, 340px); }
-.vinres__pick .pick__v { margin-right: auto; }
-/* список моделей не длиннее панели: высота по содержимому, дальше — прокрутка внутри */
-.vinres__pick .pick__list { min-width: min(100%, 340px); max-height: min(220px, 45vh); overflow-y: auto; overscroll-behavior: contain; }
 .vinres__k { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); font-weight: 600; color: var(--on-black); }
 .vinres__parts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
 .vinres__parts label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sp-3);
@@ -451,6 +476,7 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .pick__btn { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 48px; padding: 0 var(--sp-3) 0 var(--sp-4); font: inherit; font-size: var(--fs-ui);
   color: var(--ink); background: #fff; border: 1px solid var(--field-border); border-radius: 12px; cursor: pointer; transition: border-color .15s; }
 .pick__btn:hover, .pick__btn[aria-expanded="true"] { border-color: var(--ink); }
+.pick__btn:disabled { cursor: default; opacity: .5; border-color: var(--field-border); } /* шаг каскада ещё недоступен */
 .pick__k { color: var(--muted); }
 .pick__v { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pick__chev { flex: none; width: 16px; height: 16px; margin-left: var(--sp-1); color: var(--muted); transition: transform .2s; }
@@ -462,6 +488,9 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .pick__list li { display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; padding: 0 var(--sp-3); border-radius: 10px; font-size: var(--fs-ui); white-space: nowrap; cursor: pointer; }
 .pick__list li.is-active, .pick__list li:hover { background: var(--canvas); }
 .pick__list li[aria-selected="true"] { font-weight: 700; }
+/* заголовок группы (поколение в списке лет) — не выбирается */
+.pick__list li.pick__group { min-height: 0; padding: var(--sp-2) var(--sp-3) var(--sp-1); font-size: var(--fs-sm); font-weight: 600; color: var(--muted); background: none; cursor: default; }
+.pick__list li + li.pick__group { margin-top: var(--sp-2); border-top: 1px solid var(--line); padding-top: var(--sp-3); }
 .pick__tick { width: 18px; height: 18px; margin-left: auto; color: var(--green-text); visibility: hidden; }
 .pick__list li[aria-selected="true"] .pick__tick { visibility: visible; }
 .pick__list:focus-visible { outline: none; }
@@ -795,10 +824,9 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .form__msg.is-error { color: #b3261e; }
 .form[hidden] { display: none; }
 /* «Kupiłem auto w Arena Auto» — опция плиткой; отмечена — бледно-зелёная, поле VIN приглушено (оно не обязательно) */
-/* Модель вместо VIN — светлый .pick на всю ширину поля; список не длиннее окна */
-.form__pick .pick__btn { width: 100%; }
-.form__pick .pick__v { margin-right: auto; }
-.form__pick .pick__list { max-height: min(260px, 40vh); overflow-y: auto; overscroll-behavior: contain; }
+/* Авто вместо VIN — каскад .cars под подписью, как у остальных полей */
+.form__car { display: grid; gap: var(--sp-2); }
+.form__k { font-weight: 600; font-size: var(--fs-ui); }
 .form .form__opt { padding: var(--sp-3) var(--sp-4); border-radius: 12px; background: var(--canvas); cursor: pointer; transition: background .2s; }
 .form .form__opt:has(:checked) { background: var(--green-pale); }
 .form:has([name=arena]:checked) label:has([name=vin]) { opacity: .55; }

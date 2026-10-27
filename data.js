@@ -47,6 +47,42 @@ const VIN_MODELS = [
   { prefix: "KM8R", model: "palisade" },
 ];
 
+// Выбор авто без VIN — каскад «Marka → Model → Rok» (вкладка «Po marce», панель VIN, форма заявки; cascade() в app.js).
+// Марка → модели → поколения. Ключи моделей общие с POPULAR и VIN_MODELS; vitrine — ключ модели в витрине (детали в панели).
+// Поколение: code — как подписываем (FL — рестайлинг, в Корее «PE»), from/to — годы продаж в Корее (to нет — выпускается).
+// Год смены поколения стоит в обоих: машина этого года может быть любой, человек выберет по подписи.
+// Источники: docs/MODEL_REFERENCES.md (Carnival, K8, Sorento, Palisade, Grandeur, G80, GV80 — проверено 2026-10-26),
+// остальные — по Википедии, точный месяц смены поколения не сверяли. Дополнять — просто строками.
+const CARS = {
+  kia: [
+    { key: "carnival", name: "Carnival", vitrine: "carnival", gens: [{ code: "KA4", from: 2020, to: 2023 }, { code: "KA4 FL", from: 2023 }] },
+    { key: "k8", name: "K8", vitrine: "k8", gens: [{ code: "GL3", from: 2021, to: 2024 }, { code: "GL3 FL", from: 2024 }] },
+    { key: "sorento", name: "Sorento", gens: [{ code: "MQ4", from: 2020, to: 2023 }, { code: "MQ4 FL", from: 2023 }] },
+    { key: "k5", name: "K5", gens: [{ code: "DL3", from: 2019, to: 2023 }, { code: "DL3 FL", from: 2023 }] },
+    { key: "sportage", name: "Sportage", gens: [{ code: "NQ5", from: 2021, to: 2024 }, { code: "NQ5 FL", from: 2024 }] },
+    { key: "ev6", name: "EV6", gens: [{ code: "CV", from: 2021, to: 2024 }, { code: "CV FL", from: 2024 }] },
+    { key: "ev9", name: "EV9", gens: [{ code: "MV", from: 2023 }] },
+  ],
+  hyundai: [
+    { key: "palisade", name: "Palisade", gens: [{ code: "LX2", from: 2018, to: 2022 }, { code: "LX2 FL", from: 2022, to: 2024 }, { code: "LX3", from: 2025 }] },
+    { key: "grandeur", name: "Grandeur", gens: [{ code: "GN7", from: 2022, to: 2026 }, { code: "GN7 FL", from: 2026 }] },
+    { key: "santafe", name: "Santa Fe", gens: [{ code: "TM FL", from: 2020, to: 2023 }, { code: "MX5", from: 2023 }] },
+    { key: "tucson", name: "Tucson", gens: [{ code: "NX4", from: 2020, to: 2023 }, { code: "NX4 FL", from: 2023 }] },
+    { key: "sonata", name: "Sonata", gens: [{ code: "DN8", from: 2019, to: 2023 }, { code: "DN8 FL", from: 2023 }] },
+    { key: "avante", name: "Avante (Elantra)", gens: [{ code: "CN7", from: 2020, to: 2023 }, { code: "CN7 FL", from: 2023 }] },
+    { key: "staria", name: "Staria", gens: [{ code: "US4", from: 2021 }] },
+    { key: "ioniq5", name: "Ioniq 5", gens: [{ code: "NE", from: 2021, to: 2024 }, { code: "NE FL", from: 2024 }] },
+  ],
+  genesis: [
+    { key: "g80", name: "G80", vitrine: "genesis", gens: [{ code: "RG3", from: 2020, to: 2023 }, { code: "RG3 FL", from: 2023 }] },
+    { key: "gv80", name: "GV80", vitrine: "genesis", gens: [{ code: "JX1", from: 2020, to: 2023 }, { code: "JX1 FL", from: 2023 }] },
+    { key: "gv70", name: "GV70", gens: [{ code: "JK1", from: 2020, to: 2024 }, { code: "JK1 FL", from: 2024 }] },
+    { key: "g90", name: "G90", gens: [{ code: "RS4", from: 2021 }] },
+    { key: "g70", name: "G70", gens: [{ code: "IK FL", from: 2020 }] },
+    { key: "gv60", name: "GV60", gens: [{ code: "JW1", from: 2021 }] },
+  ],
+};
+
 const MODELS = {
   carnival: "Kia Carnival KA4",
   k8: "Kia K8",

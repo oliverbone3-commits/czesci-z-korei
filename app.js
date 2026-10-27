@@ -47,8 +47,9 @@ function applyLang() {
   $("formMsg").textContent = "";
   $("searchMsg").textContent = "";
   setTab(state.tab);
+  carHero();
   vinRes();
-  pickForm();
+  carForm();
   messengerLinks();
   pauseLabel();
   delivery();
@@ -106,7 +107,8 @@ function setTab(tab) {
   const changed = tab !== state.tab;
   state.tab = tab;
   document.querySelectorAll(".search__tabs button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tab === tab));
-  $("searchForm").hidden = tab === "arena";
+  $("searchForm").hidden = tab === "arena" || tab === "car";
+  $("searchCar").hidden = tab !== "car";
   $("searchArena").hidden = tab !== "arena";
   $("searchInput").placeholder = t(tab === "oe" ? "search.oe.ph" : "search.vin.ph");
   $("searchInput").classList.toggle("is-vin", tab === "vin");
@@ -160,19 +162,104 @@ $("searchInput").addEventListener("input", (e) => {
   searchErr(err ? t(err) : "");
   if (!lifted) return;
   if (!err && vin.length === 17) { if (!vr.open || vr.code !== vin) vinOpen({ kind: "vin", code: vin }, false); }
-  else if (vr.kind !== "model") vinClose(); // панель «без VIN» не зависит от поля
+  else vinClose();
 });
-// Второй вход — без VIN: та же панель и то же раскрытие, сразу выбор модели (как у нераспознанного VIN).
-$("searchNoVin").addEventListener("click", () => vinOpen({ kind: "model", code: "" }, true));
+// «Nie masz VIN pod ręką?» — на вкладку «Po marce» и сразу список марок (на телефоне это главный сценарий).
+$("searchNoVin").addEventListener("click", () => {
+  setTab("car");
+  setTimeout(() => $("searchCarB").querySelector(".pick__btn").click()); // после этого клика, иначе список закроется
+});
+
+/* ---------- Авто без VIN: Marka → Model → Rok ---------- */
+
+// Выбор авто: { brand, model, year, other }. model "other" — «Inny model», текст в other;
+// year — "номер поколения:год" или "?" (nie pamiętam). Таблица марок, моделей и поколений — CARS в data.js.
+const carNew = (brand = null, model = null) => ({ brand, model, year: null, other: "" });
+const carModel = (c) => (CARS[c.brand] || []).find((m) => m.key === c.model);
+const carReady = (c) => !!c.brand && (c.model === "other" ? !!c.other.trim() : !!c.model);
+function carGen(c) {
+  const m = carModel(c);
+  return m && c.year && c.year !== "?" ? m.gens[+c.year.split(":")[0]] : null;
+}
+// «Kia Carnival KA4 FL, 2024»; год не помнит — без поколения; «Inny model» — что человек вписал.
+function carLabel(c) {
+  const b = BRANDS.find((x) => x.key === c.brand), m = carModel(c), g = carGen(c);
+  if (!b) return "";
+  const name = c.model === "other" ? c.other.trim() : m ? m.name : "";
+  return [b.name, name, g && g.code].filter(Boolean).join(" ") + (g ? ", " + c.year.split(":")[1] : "");
+}
+// Годы по поколениям, новые сверху; поколение — заголовком группы («KA4 FL · 2023–»), на кнопке «2024 · KA4 FL».
+const YEAR_NOW = new Date().getFullYear();
+function carYears(c) {
+  const m = carModel(c);
+  if (!m) return [];
+  const out = [];
+  m.gens.forEach((g, i) => {
+    const ys = [];
+    for (let y = g.to || YEAR_NOW; y >= g.from; y--) ys.push([`${i}:${y}`, String(y), `${y} · ${g.code}`]);
+    out.unshift([null, `${g.code} · ${g.from}–${g.to || ""}`], ...ys);
+  });
+  return [...out, ["?", t("car.year.any")]];
+}
+// Каскад — три селектора .pick и поле «Inny model» на месте года. Выбор ведёт дальше сам: марка → список моделей → список лет.
+// onChange(c, done) — после каждого изменения; done — последний шаг (выбран год или вписан свой model + Enter).
+function cascade(id, c, onChange) {
+  const root = $(id);
+  root.insertAdjacentHTML("afterbegin", `<div class="pick" id="${id}B"></div><div class="pick" id="${id}M"></div>
+    <div class="pick" id="${id}Y"></div><input class="cars__other" id="${id}O" autocomplete="off" hidden>`);
+  const other = $(id + "O");
+  const next = (p) => setTimeout(p.open); // после клика по пункту, иначе «клик мимо» сразу закроет следующий список
+  const pb = picker(id + "B", () => t("car.brand"), () => Object.keys(CARS).map((k) => [k, BRANDS.find((b) => b.key === k).name]),
+    () => c.brand,
+    (k) => { if (k !== c.brand) Object.assign(c, carNew(k)); update(); onChange(c, false); next(pm); },
+    () => t("car.pick"));
+  const pm = picker(id + "M", () => t("car.model"), () => [...(CARS[c.brand] || []).map((m) => [m.key, m.name]), ["other", t("car.other")]],
+    () => c.model,
+    (k) => {
+      if (k !== c.model) Object.assign(c, { model: k, year: null });
+      update(); onChange(c, false);
+      if (k === "other") other.focus(); else next(py);
+    },
+    () => t("car.pick"));
+  const py = picker(id + "Y", () => t("car.year"), () => carYears(c), () => c.year,
+    (k) => { c.year = k; update(); onChange(c, true); },
+    () => t("car.pick"));
+  other.addEventListener("input", () => { c.other = other.value; onChange(c, false); });
+  other.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); onChange(c, true); } });
+  function update() {
+    pb(); pm(); py();
+    $(id + "M").querySelector(".pick__btn").disabled = !c.brand;
+    $(id + "Y").querySelector(".pick__btn").disabled = !c.model;
+    $(id + "Y").hidden = c.model === "other";
+    other.hidden = c.model !== "other";
+    if (other.value !== c.other) other.value = c.other;
+    other.placeholder = t("car.other.ph");
+    other.setAttribute("aria-label", t("car.other.ph"));
+  }
+  return update;
+}
+
+// Вкладка «Po marce»: выбран год (или вписан свой model) — та же панель результата, что у VIN; «→» — то же вручную.
+const heroCar = carNew();
+const carHero = cascade("searchCar", heroCar, (c, done) => {
+  searchErr("");
+  if (vr.open && vr.kind === "car") vinRes(); // окно открыто — панель следует за выбором
+  else if (done && carReady(c)) vinOpen({ kind: "car", code: "" }, true);
+});
+$("searchCarGo").addEventListener("click", () => {
+  if (carReady(heroCar)) return vinOpen({ kind: "car", code: "" }, true);
+  searchErr(t(heroCar.model === "other" ? "car.need.other" : "car.need"));
+});
 
 /* ---------- Результат VIN: модель → детали → канал → отправка ---------- */
 
-// Модель угадываем по таблице VIN_BRANDS / VIN_MODELS (data.js) и всегда переспрашиваем; не нашли — выбор из POPULAR.
-// kind: "vin" — по VIN из поля, "oe" — номер не из витрины, "model" — без VIN (человек выбирает модель сам;
-// VIN можно дописать внизу панели — vinOpt(), иначе в сообщении «Model: … (bez VIN)»).
-const vr = { open: false, kind: "vin", code: "", brand: null, model: null, asked: true, picked: new Set(), ch: "wa", note: false, vinErr: null };
+// Модель угадываем по таблице VIN_BRANDS / VIN_MODELS (data.js) и всегда переспрашиваем; не нашли — каскад
+// марка/модель/год (марка из VIN уже выбрана). kind: "vin" — по VIN из поля, "oe" — номер не из витрины,
+// "car" — вкладка «Po marce» (авто — heroCar; VIN можно дописать внизу панели — vinOpt(), иначе «Auto: … (bez VIN)»).
+// step у VIN: "guess" — модель из VIN, ждём «Tak»; "fixed" — подтвердили; "pick" — выбирают в каскаде панели.
+const vr = { open: false, kind: "vin", code: "", car: carNew(), step: "pick", picked: new Set(), ch: "wa", note: false, vinErr: null };
+const vrCar = () => (vr.kind === "car" ? heroCar : vr.car);
 const popular = (k) => POPULAR.find((m) => m.key === k);
-const carName = (k) => (k === "other" ? t("vr.other") : popular(k).full || popular(k).name);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 function vinDecode(vin) {
   const hit = VIN_MODELS.find((x) => vin.startsWith(x.prefix));
@@ -180,7 +267,7 @@ function vinDecode(vin) {
 }
 // Детали модели из витрины: 3 самых выгодных (без цены в PL — в конце).
 function vinItems() {
-  const m = vr.model && vr.model !== "other" && popular(vr.model);
+  const m = carModel(vrCar());
   if (!m || !m.vitrine) return [];
   const pct = (it) => (it.pl ? save(it.ours, it.pl) : -1);
   return ITEMS.filter((it) => it.model === m.vitrine).sort((a, b) => pct(b) - pct(a)).slice(0, 3);
@@ -191,7 +278,8 @@ function vinOpen({ kind, code }, focus) {
   // Тот же VIN/OE снова (панель закрыли и открыли) — выбор модели, галочки и «что ещё» сохраняем.
   if (kind !== vr.kind || code !== vr.code) {
     const d = kind === "vin" ? vinDecode(code) : { brand: null, model: null };
-    Object.assign(vr, { kind, code, brand: d.brand, model: d.model, asked: !d.model, picked: new Set(), note: kind === "oe", vinErr: null });
+    Object.assign(vr.car, carNew(d.brand, d.model));
+    Object.assign(vr, { kind, code, step: d.model ? "guess" : "pick", picked: new Set(), note: kind === "oe", vinErr: null });
     $("vrNote").value = $("vrVin").value = "";
   }
   vr.open = true;
@@ -199,8 +287,10 @@ function vinOpen({ kind, code }, focus) {
   vinRes();
   if (!focus) return;
   searchErr("");
-  const first = $("vinRes").querySelector("#vrHead button, #pickVin:not([hidden]) .pick__btn, #vrNote");
-  first.focus({ preventScroll: true });
+  // марка из VIN уже выбрана — сразу на модель
+  const first = vr.kind === "vin" && vr.step === "pick" && vr.car.brand ? $("vrCarM").querySelector(".pick__btn")
+    : $("vinRes").querySelector("#vrHead button, #vrCar:not([hidden]) .pick__btn, #vrParts input, #vrParts button");
+  if (first) first.focus({ preventScroll: true });
   $("vrHead").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "nearest" });
 }
 function vinClose(focusInput = false) {
@@ -301,30 +391,30 @@ function dropSearch(focusInput = true) {
 $("searchX").addEventListener("click", () => dropSearch());
 $("searchDim").addEventListener("click", () => dropSearch());
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && lifted && !e.defaultPrevented && $("pickVinList").hidden && !dlg.open) dropSearch();
+  if (e.key === "Escape" && lifted && !e.defaultPrevented && !search.querySelector(".pick__list:not([hidden])") && !dlg.open) dropSearch();
 });
 
 function vinRes() {
   $("vinRes").hidden = !vr.open;
   if (!vr.open) return liftSize();
   const mask = vr.kind === "vin" ? `<span class="vinres__vin">VIN …${vr.code.slice(-6)}</span>` : "";
-  const brand = BRANDS.find((b) => b.key === vr.brand);
+  const c = vrCar(), brand = BRANDS.find((b) => b.key === c.brand), label = esc(carLabel(c));
   let head;
   if (vr.kind === "oe") head = `<p class="vinres__q">${t("vr.oe").replace("{oe}", `<b>${esc(vr.code)}</b>`)}</p>`;
-  else if (vr.model && !vr.asked) head = `<p class="vinres__q">${t("vr.guess").replace("{m}", `<b>${carName(vr.model)}</b>`)}${mask}</p>
+  else if (vr.kind === "car") head = `<p class="vinres__q">${carReady(c) ? `<b>${label}</b>` : t("vr.which.n")}</p>`;
+  else if (vr.step === "guess") head = `<p class="vinres__q">${t("vr.guess").replace("{m}", `<b>${label}</b>`)}${mask}</p>
       <div class="vinres__yn"><button type="button" class="btn btn--sm" data-vr="yes">${t("vr.yes")}</button>
       <button type="button" class="vinres__link" data-vr="no">${t("vr.no")}</button></div>`;
-  else if (vr.model) head = `<p class="vinres__q"><b>${carName(vr.model)}</b>${mask}</p>
+  else if (vr.step === "fixed") head = `<p class="vinres__q"><b>${label}</b>${mask}</p>
       <button type="button" class="vinres__link" data-vr="no">${t("vr.change")}</button>`;
-  else if (vr.kind === "model") head = `<p class="vinres__q">${t("vr.which.n")}</p>`;
   else head = `<p class="vinres__q">${brand ? t("vr.which.b").replace("{b}", brand.name) : t("vr.which")}${mask}</p>`;
   $("vrHead").innerHTML = head;
-  // Выбор модели — общий селектор .pick; марку из VIN ставим первой.
-  $("pickVin").hidden = vr.kind === "oe" || !!vr.model;
-  pickVin();
+  // VIN без распознанной модели — тот же каскад марка/модель/год, марка из VIN уже выбрана.
+  $("vrCar").hidden = vr.kind !== "vin" || vr.step !== "pick";
+  carPanel();
 
   const items = vinItems();
-  const m = vr.model && vr.model !== "other" && popular(vr.model);
+  const m = vr.kind !== "oe" && carModel(c);
   // Под деталями — строка ссылок: вся витрина модели и «Inna część» (раскрывает поле «что ещё»).
   const more = [m && m.vitrine ? `<button type="button" class="vinres__link" data-vr="all">${t("vr.all")}</button>` : "",
     vr.note ? "" : `<button type="button" class="vinres__link" data-vr="note" aria-controls="vrNoteBox" aria-expanded="false">${t("vr.more")}</button>`].join("");
@@ -340,35 +430,43 @@ function vinRes() {
   $("vrNoteBox").hidden = !vr.note;
   $("vrNoteK").textContent = t(vr.kind === "oe" ? "vr.oe.note" : "vr.note");
   $("vrNote").placeholder = t(vr.kind === "oe" ? "vr.oe.ph" : "vr.note.ph");
-  // Без VIN — после выбора модели внизу необязательное поле VIN
-  $("vrVinBox").hidden = vr.kind !== "model" || !vr.model;
+  // Без VIN — после выбора авто внизу необязательное поле VIN
+  $("vrVinBox").hidden = vr.kind !== "car" || !carReady(c);
   $("vrVinMsg").textContent = vr.vinErr ? t(vr.vinErr) : "";
   vinChannel();
   liftSize(); // содержимое панели сменилось — окно плавно подстраивается
 }
 
-// Марка из VIN известна — в списке только её модели; не известна — все. Последним — «Inny model / nie wiem».
-const pickVin = picker("pickVin", () => t("vit.model"),
-  () => [...POPULAR.filter((m) => !vr.brand || m.brand === vr.brand)
-    .sort((a, b) => a.brand.localeCompare(b.brand)) // без марки — сгруппированы: Genesis, Hyundai, Kia
-    .map((m) => [m.key, m.full || m.name]), ["other", t("vr.other")]],
-  () => vr.model,
-  (k) => {
-    Object.assign(vr, { model: k, asked: true, picked: new Set() });
-    vinRes();
-    ($("vrParts").querySelector("input") || $("vrNote")).focus();
-  },
-  () => t("vr.pick.none"));
+// Каскад в панели VIN: выбор сразу меняет детали ниже; выбран год — фокус на первую деталь.
+const carPanel = cascade("vrCar", vr.car, (c, done) => {
+  vr.picked = new Set();
+  vinRes();
+  const first = done && $("vrParts").querySelector("input, button");
+  if (first) first.focus();
+});
+
+// Список каскада в панели не обрезается её прокруткой: пока он открыт, под каскадом место на его высоту — окно подрастает.
+new MutationObserver(() => {
+  const list = $("vrCar").querySelector(".pick__list:not([hidden])");
+  $("vrCar").style.marginBottom = list ? list.offsetHeight + 8 + "px" : "";
+  if (list) $("vinRes").scrollTop = 0; // вопрос над каскадом остаётся на виду
+  liftSize();
+}).observe($("vrCar"), { subtree: true, attributes: true, attributeFilter: ["hidden"] });
 
 $("vinRes").addEventListener("click", (e) => {
   const b = e.target.closest("[data-vr]");
   if (!b) return;
   const act = b.dataset.vr;
-  if (act === "yes") { vr.asked = true; vinRes(); ($("vrParts").querySelector("input") || $("vrNote")).focus(); }
-  else if (act === "no") { Object.assign(vr, { model: null, asked: true, picked: new Set() }); vinRes(); $("pickVin").querySelector(".pick__btn").focus(); }
+  if (act === "yes") { vr.step = "fixed"; vinRes(); ($("vrParts").querySelector("input, button") || $("vrHead").querySelector("button")).focus(); }
+  else if (act === "no") {
+    Object.assign(vr.car, carNew(vr.car.brand));
+    Object.assign(vr, { step: "pick", picked: new Set() });
+    vinRes();
+    $("vrCar").querySelector(`#vrCar${vr.car.brand ? "M" : "B"} .pick__btn`).focus();
+  }
   else if (act === "note") { vr.note = true; vinRes(); $("vrNote").focus(); }
   else if (act === "all") {
-    Object.assign(state, { model: popular(vr.model).vitrine, cat: null, q: null });
+    Object.assign(state, { model: carModel(vrCar()).vitrine, cat: null, q: null });
     dropSearch(false);
     render();
     $("vitrine").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
@@ -404,11 +502,11 @@ function vinLines() {
   const parts = vinItems().filter((it) => vr.picked.has(it.oe)).map((it) => `– ${tr(it.name)} (OE ${it.oe})`);
   const note = $("vrNote").value.trim();
   if (vr.kind === "oe") return [t("msg.hello"), `OE: ${vr.code}`, note ? `${t("vr.msg.car")}: ${note}` : null, `Lang: ${lang}`];
-  // Без VIN — «Model: Kia K8 (bez VIN)», чтобы было видно, что VIN надо спросить.
+  // Без VIN — «Auto: Kia Carnival KA4, 2023 (bez VIN)», чтобы было видно, что VIN надо спросить.
   const vin = vr.kind === "vin" ? vr.code : vinOpt();
-  const car = vr.model ? carName(vr.model) : t("vr.other");
-  return [t("msg.hello"), vin ? `VIN: ${vin}` : `${t("vr.msg.model")}: ${car} (${t("vr.msg.novin")})`,
-    vin && vr.model ? `${t("vr.msg.car")}: ${car}` : null,
+  const c = vrCar(), car = carLabel(c);
+  return [t("msg.hello"), vin ? `VIN: ${vin}` : `${t("vr.msg.car")}: ${car || "?"} (${t("vr.msg.novin")})`,
+    vin && car ? `${t("vr.msg.car")}: ${car}` : null,
     `${t("mail.parts")}:\n${parts.length ? parts.join("\n") : "– " + t(vin ? "vr.msg.byvin" : "vr.msg.bymodel")}`,
     note ? `${t("vr.msg.more")}: ${note}` : null, `Lang: ${lang}`];
 }
@@ -418,7 +516,7 @@ const vinText = () => vinLines().filter(Boolean).join("\n");
 function vinChannel() {
   document.querySelectorAll("#vrCh [data-ch]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ch === vr.ch));
   const go = $("vrGo"), text = vinText();
-  const subject = `${t("mail.subject")} ${vr.code || vinOpt() || (vr.model ? carName(vr.model) : "")}`.trim();
+  const subject = `${t("mail.subject")} ${vr.code || vinOpt() || carLabel(vrCar())}`.trim();
   go.href = vr.ch === "wa" ? `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`
     : vr.ch === "tg" ? `https://t.me/${TELEGRAM_USER}`
     : `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
@@ -444,18 +542,19 @@ $("vrGo").addEventListener("click", () => {
   const msg = $("vrMsg");
   const say = (text) => { msg.textContent = text; liftSize(); };
   if (vr.ch !== "tg") return say(t(vr.ch === "wa" ? "vr.sent.wa" : "vr.sent.mail"));
-  const v = vr.kind === "model" ? vinOpt() : vr.code;
+  const v = vr.kind === "car" ? vinOpt() : vr.code;
   copyText(vinText()).then(() => say(t("vr.sent.tg")), () => say(v ? t("vr.sent.tg.fail").replace("{v}", v) : t("vr.sent.tg.fail.m")));
 });
 // Запасной путь — обычная форма заявки с уже подставленными VIN, моделью и деталями.
 $("vrForm").addEventListener("click", () => {
-  const vin = vr.kind === "vin" ? vr.code : vr.kind === "model" ? vinOpt() : "";
+  const vin = vr.kind === "vin" ? vr.code : vr.kind === "car" ? vinOpt() : "";
   if (vin) form.vin.value = vin;
-  if (vr.model) { formModel = vr.model; pickForm(); }
+  const c = vrCar();
+  if (vr.kind !== "oe" && c.brand) { Object.assign(formCar, c); carForm(); }
   const note = $("vrNote").value.trim();
   if (vr.kind === "oe") addToParts(`OE ${vr.code}${note ? " — " + note : ""}`);
   else {
-    const car = vr.model && vr.model !== "other" ? carName(vr.model) : "";
+    const car = carReady(c) ? carLabel(c) : "";
     const picked = vinItems().filter((it) => vr.picked.has(it.oe));
     picked.forEach((it) => addToParts(`${car ? car + ": " : ""}${tr(it.name)} (${it.oe})`));
     if (note) addToParts(`${car ? car + ": " : ""}${note}`);
@@ -823,6 +922,8 @@ function filters() {
 // кнопка «Подпись: значение ⌄» + listbox; стрелки, Enter/Space, Esc, Tab, клик мимо закрывает.
 // opts() → [[значение, текст]], val() → текущее значение, onPick(значение). Возвращает функцию обновления.
 // ph() — необязательная подсказка на кнопке, пока значение не выбрано (её нет в списке пунктов).
+// Пункт [null, текст] — заголовок группы (не выбирается, стрелки его пропускают); третий элемент — текст на кнопке,
+// если он отличается от пункта списка («2023» в списке → «2023 · KA4» на кнопке). update.open() — открыть список.
 const TICK = `<svg class="pick__tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function picker(id, label, opts, val, onPick, ph) {
   const root = $(id);
@@ -835,17 +936,20 @@ function picker(id, label, opts, val, onPick, ph) {
   let items = [], active = 0;
   const update = () => {
     items = opts();
-    const v = val(), cur = items.find(([k]) => k === v) || (ph ? [null, ph()] : items[0]);
+    const v = val(), cur = items.find(([k]) => k !== null && k === v) || (ph ? [null, ph()] : items.find(([k]) => k !== null));
+    const shown = cur[2] || cur[1];
     btn.querySelector(".pick__k").textContent = label();
-    btn.querySelector(".pick__v").textContent = cur[1];
-    btn.setAttribute("aria-label", `${label()}: ${cur[1]}`);
+    btn.querySelector(".pick__v").textContent = shown;
+    btn.setAttribute("aria-label", `${label()}: ${shown}`);
     list.setAttribute("aria-label", label());
-    list.innerHTML = items.map(([k, txt], i) =>
-      `<li role="option" id="${id}-${i}" aria-selected="${k === cur[0]}">${txt}${TICK}</li>`).join("");
+    list.innerHTML = items.map(([k, txt], i) => k === null
+      ? `<li role="presentation" class="pick__group">${txt}</li>`
+      : `<li role="option" id="${id}-${i}" aria-selected="${k === cur[0]}">${txt}${TICK}</li>`).join("");
   };
-  const mark = (i) => {
+  const mark = (i, dir = 1) => {
     const lis = [...list.children];
     active = (i + lis.length) % lis.length;
+    while (items[active][0] === null) active = (active + dir + lis.length) % lis.length; // заголовок группы — дальше
     lis.forEach((li, k) => li.classList.toggle("is-active", k === active));
     list.setAttribute("aria-activedescendant", lis[active].id);
     lis[active].scrollIntoView({ block: "nearest" }); // длинный список прокручивается внутри
@@ -854,7 +958,7 @@ function picker(id, label, opts, val, onPick, ph) {
     update();
     list.hidden = false;
     btn.setAttribute("aria-expanded", "true");
-    mark(Math.max(0, items.findIndex(([k]) => k === val())));
+    mark(Math.max(0, items.findIndex(([k]) => k !== null && k === val())));
     list.focus();
   };
   const close = (focusBtn = true) => {
@@ -868,19 +972,20 @@ function picker(id, label, opts, val, onPick, ph) {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); open(); }
   });
   list.addEventListener("click", (e) => {
-    const li = e.target.closest("li");
+    const li = e.target.closest("li[role=option]");
     if (li) pick([...list.children].indexOf(li));
   });
   list.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") { e.preventDefault(); mark(active + 1); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); mark(active - 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); mark(active - 1, -1); }
     else if (e.key === "Home") { e.preventDefault(); mark(0); }
-    else if (e.key === "End") { e.preventDefault(); mark(-1); }
+    else if (e.key === "End") { e.preventDefault(); mark(-1, -1); }
     else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(active); }
     else if (e.key === "Escape") { e.preventDefault(); close(); }
     else if (e.key === "Tab") close(false);
   });
   document.addEventListener("click", (e) => { if (!list.hidden && !root.contains(e.target)) close(false); });
+  update.open = open;
   return update;
 }
 
@@ -1141,19 +1246,13 @@ dlg.addEventListener("focusin", (e) => {
   if (e.target.matches("input, textarea")) setTimeout(() => e.target.scrollIntoView({ block: "nearest" }), 300);
 });
 
-// Модель вместо VIN (нет под рукой): тот же селектор .pick, что в панели первого экрана. Нужно хотя бы одно из двух.
-let formModel = null;
-const pickForm = picker("pickForm", () => t("form.model"),
-  () => [...[...POPULAR].sort((a, b) => a.brand.localeCompare(b.brand)).map((m) => [m.key, m.full || m.name]), ["other", t("vr.other")]],
-  () => formModel,
-  (k) => {
-    formModel = k;
-    pickForm();
-    // «Podaj VIN albo model» больше не актуально
-    if (!norm(form.vin.value)) { form.vin.removeAttribute("aria-invalid"); $("formMsg").textContent = ""; }
-  },
-  () => t("form.model.ph"));
-form.addEventListener("reset", () => { formModel = null; pickForm(); });
+// Авто вместо VIN (нет под рукой): тот же каскад марка/модель/год, что в первом экране. Нужно VIN или марка + модель.
+const formCar = carNew();
+const carForm = cascade("carForm", formCar, (c) => {
+  // «Podaj VIN albo auto» больше не актуально
+  if (carReady(c) && !norm(form.vin.value)) { form.vin.removeAttribute("aria-invalid"); $("formMsg").textContent = ""; }
+});
+form.addEventListener("reset", () => { Object.assign(formCar, carNew()); carForm(); });
 
 // Открыть заявку. Фокус — на первое поле, которое ещё надо заполнить (VIN или модель → детали → телефон).
 function openForm() {
@@ -1161,11 +1260,13 @@ function openForm() {
   if (!dlg.open) {
     opener = document.activeElement;
     if (!$("vinOk").hidden) { form.reset(); $("formMsg").textContent = ""; }
+    // авто, выбранное на вкладке «Po marce», — в форму, если там ещё пусто
+    if (!formCar.brand && heroCar.brand) { Object.assign(formCar, heroCar); carForm(); }
     showForm();
     dlg.showModal();
     fitDialog();
   }
-  const vinOk = form.arena.checked || norm(form.vin.value).length === 17 || !!formModel;
+  const vinOk = form.arena.checked || norm(form.vin.value).length === 17 || carReady(formCar);
   const parts = form.parts.value.trim();
   const field = !vinOk ? form.vin : !parts || parts.endsWith(":") ? form.parts : form.contact;
   field.focus();
@@ -1231,16 +1332,16 @@ form.addEventListener("submit", (e) => {
   const arena = form.arena.checked;
   // VIN или модель: начатый VIN должен быть полным; пустой — достаточно модели
   if (!arena && vin && vin.length !== 17) return fail(form.vin, "msg.vin");
-  if (!arena && !vin && !formModel) return fail(form.vin, "msg.vinmodel");
+  if (!arena && !vin && !carReady(formCar)) return fail(form.vin, "msg.vinmodel");
   if (!form.parts.value.trim()) return fail(form.parts, "msg.fill");
   if (!form.contact.value.trim()) return fail(form.contact, "msg.fill");
   const email = form.email.value.trim();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(form.email, "msg.email");
   if (!form.rodo.checked) return fail(form.rodo, "msg.rodo");
   msg.classList.remove("is-error");
-  const car = formModel ? carName(formModel) : "";
-  const body = [vin || !car ? `VIN: ${vin || "—"}` : `${t("vr.msg.model")}: ${car} (${t("vr.msg.novin")})`,
-    vin && car ? `${t("vr.msg.model")}: ${car}` : null, arena ? t("mail.arena") : null, `${t("mail.parts")}:\n${form.parts.value}`,
+  const car = carReady(formCar) ? carLabel(formCar) : "";
+  const body = [vin || !car ? `VIN: ${vin || "—"}` : `${t("vr.msg.car")}: ${car} (${t("vr.msg.novin")})`,
+    vin && car ? `${t("vr.msg.car")}: ${car}` : null, arena ? t("mail.arena") : null, `${t("mail.parts")}:\n${form.parts.value}`,
     `${t("form.contact")}: ${form.contact.value}`, email ? `E-mail: ${email}` : null, `Lang: ${lang}`].filter(Boolean).join("\n\n");
   const subject = `${t("mail.subject")} ${vin || car || t("mail.arena")}`;
   window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
