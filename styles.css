@@ -738,6 +738,7 @@ html:has(.dlg[open]) { overflow: hidden; }
 .rq__opt-t { flex: 1; display: grid; }
 .rq__opt b { font-size: var(--fs-body); font-weight: 600; }
 .rq__opt small { font-size: var(--fs-sm); color: var(--muted); }
+.rq__aside { flex: none; font-size: var(--fs-sm); color: var(--muted); white-space: nowrap; }
 .rq__chev { font-size: var(--fs-xl); line-height: 1; color: var(--muted); transition: transform .2s; }
 .rq__opt:hover .rq__chev { transform: translateX(3px); color: var(--ink); }
 .rq__logo { flex: none; display: grid; place-items: center; width: 56px; }

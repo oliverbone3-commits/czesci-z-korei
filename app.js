@@ -180,7 +180,7 @@ $("searchForm").addEventListener("submit", (e) => {
 // Шаг 2 — детали, шаг 3 — сводка и канал (WhatsApp / Telegram / e-mail), "done" — честный статус и запасной путь.
 // Год не спрашиваем и не показываем: 10-й знак VIN у KDM не проверен (VIN_YEARS в data.js).
 // parts: { id, name (строка или { pl, en }), oe, model (ключ витрины), kit (подпись авто набора) }.
-const req = { vin: "", brand: null, model: null, other: "", carOk: false, arena: false, parts: [], urgent: true, draft: "", vinDraft: "" };
+const req = { vin: "", brand: null, model: null, gen: null, other: "", carOk: false, arena: false, parts: [], urgent: true, draft: "", vinDraft: "" };
 const rq = { step: 1, view: "how", hist: [], done: null, copied: false };
 const dlg = $("vinDlg");
 let opener = null;
@@ -189,6 +189,24 @@ const brandName = (k) => (BRANDS.find((b) => b.key === k) || {}).name || "";
 const carModel = () => (CARS[req.brand] || []).find((m) => m.key === req.model);
 const modelName = () => (req.model === "other" ? req.other.trim() : (carModel() || {}).name || "");
 const carName = () => [brandName(req.brand), modelName()].filter(Boolean).join(" ");
+// Поколение (gen — индекс в CARS[марка][модель].gens, "?" — «Nie wiem», null — не спрашивали): только без VIN —
+// с VIN подберём сами (10-й знак у KDM не проверен, на него не опираемся).
+const genYears = (g) => `${g.from}–${g.to || new Date().getFullYear()}`;
+function genText() {
+  const g = req.gen === "?" ? null : ((carModel() || {}).gens || [])[req.gen];
+  return req.gen === "?" ? t("rq.year.unknown") : g ? `${genYears(g)} (${g.code})` : "";
+}
+const carFull = () => [carName(), genText()].filter(Boolean).join(" · ");
+// Без VIN и поколений несколько — спросить «Który rocznik?»; одно — записать сразу.
+function carDone() {
+  const gens = (carModel() || {}).gens || [];
+  if (req.vin || req.model === "other" || req.gen !== null || gens.length < 2) {
+    if (!req.vin && req.gen === null && gens.length === 1) req.gen = 0;
+    req.carOk = true;
+    return go(2);
+  }
+  go(1, "year");
+}
 // Марка по WMI (знаки 1–3), модель по префиксу — только где известна точно (VIN_MODELS: KNDN → Carnival, KM8R → Palisade).
 function vinDecode(vin) {
   const hit = VIN_MODELS.find((x) => vin.startsWith(x.prefix));
@@ -197,7 +215,7 @@ function vinDecode(vin) {
 function setVin(vin) {
   req.vinDraft = vin;
   if (vin === req.vin) return;
-  Object.assign(req, { vin, ...vinDecode(vin), other: "", carOk: false });
+  Object.assign(req, { vin, ...vinDecode(vin), gen: null, other: "", carOk: false });
 }
 // Вид шага 1 по тому, что известно: модель — подтвердить; есть VIN или «klient Arena» — марка/модель; иначе — как узнать авто.
 function carView() {
@@ -256,7 +274,7 @@ function reqOe(q) { reqFresh(); addPart(oePart(q)); reqOpen(req.carOk ? 2 : 1); 
 // «Wyślij VIN» на карточке модели: модель уже выбрана, VIN можно добавить в карточке подтверждения.
 function reqCar(m) {
   if (req.vin && vinDecode(req.vin).brand !== m.brand) req.vin = "";
-  Object.assign(req, { brand: m.brand, model: m.key, other: "", carOk: false });
+  Object.assign(req, { brand: m.brand, model: m.key, gen: null, other: "", carOk: false });
   reqOpen(1, "ok");
 }
 // Все кнопки заявки на странице: ссылки #vin, «Zapytaj», «Zamów zestaw», ссылки под поиском, баннеры.
@@ -309,7 +327,8 @@ function rqErr(text, field) {
 const head = (title, sub) => `<h2 class="rq__h" id="rqH" tabindex="-1">${title}</h2>${sub ? `<p class="rq__sub">${sub}</p>` : ""}`;
 const next = (act, key = "rq.next") => `<button type="button" class="btn rq__go" data-go="${act}">${t(key)} <span aria-hidden="true">›</span></button>`;
 // Строка-кнопка списка: заголовок, подпись muted, «›»; клик сразу ведёт дальше.
-const opt = (act, title, sub, pre = "") => `<button type="button" class="rq__opt" data-go="${act}">${pre}<span class="rq__opt-t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="rq__chev" aria-hidden="true">›</span></button>`;
+// aside — тихая подпись справа (код поколения).
+const opt = (act, title, sub, pre = "", aside = "") => `<button type="button" class="rq__opt" data-go="${act}">${pre}<span class="rq__opt-t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span>${aside ? `<span class="rq__aside">${aside}</span>` : ""}<span class="rq__chev" aria-hidden="true">›</span></button>`;
 const field = (id, cls, val, ph, extra = "") => `<div class="rq__f"><input class="rq__field ${cls}" id="${id}" value="${esc(val)}" autocomplete="off" spellcheck="false" placeholder="${ph}" aria-label="${ph}" aria-describedby="rqErr"${extra}>
   <p class="rq__err" id="rqErr" role="alert"></p></div>`;
 
@@ -337,6 +356,12 @@ function rqCar() {
       return ctx + head(t("rq.brand.h"), req.vin ? t("rq.brand.vin") : "")
         + `<div class="rq__opts">${["kia", "hyundai", "genesis"].map((k) => BRANDS.find((b) => b.key === k)).map((b) =>
           opt("brand:" + b.key, b.name, "", `<span class="rq__logo"><img src="${b.logo}" alt="" style="height:${b.h}px"></span>`)).join("")}</div>`;
+    case "year": {
+      // Последнее поколение сверху: слева годы крупно, справа muted код поколения; последней строкой «Nie wiem».
+      const gens = (carModel() || {}).gens || [];
+      return ctx + head(t("rq.year.h"), esc(carName())) + `<div class="rq__opts">${gens.map((g, i) => [g, i]).reverse().map(([g, i]) =>
+        opt("year:" + i, genYears(g), "", "", g.code)).join("")}${opt("year:?", t("rq.year.any"))}</div>`;
+    }
     case "other":
       return head(t("rq.other.h").replace("{b}", brandName(req.brand))) + field("rqOther", "", req.other, t("rq.other.ph")) + next("other:next");
     default:
@@ -381,7 +406,7 @@ function addDraft() {
 }
 
 function rqSend() {
-  const auto = `${esc(carName())}<small>${req.vin ? `<span class="rq__vin">${req.vin}</span>` : t("rq.novin")}${req.arena ? " · " + t("rq.arena") : ""}</small>`;
+  const auto = `${esc(carName())}${genText() ? `<small>${esc(genText())}</small>` : ""}<small>${req.vin ? `<span class="rq__vin">${req.vin}</span>` : t("rq.novin")}${req.arena ? " · " + t("rq.arena") : ""}</small>`;
   const row = (k, v, act) => `<div class="rq__row"><dt>${t(k)}</dt><dd>${v}</dd>
     <button type="button" class="rq__link" data-go="${act}" aria-label="${t("rq.change")}: ${t(k)}">${t("rq.change")}</button></div>`;
   return head(t("rq.send.h")) + `<dl class="rq__sum">${row("rq.sum.car", auto, "sum:car")}
@@ -442,24 +467,31 @@ $("rqBody").addEventListener("click", (e) => {
   }
   if (v === "vin") return vinNext();
   if (v === "ok") {
-    if (a === "yes") { req.carOk = true; return go(2); }
+    if (a === "yes") return carDone();
     if (a === "vin") return go(1, "vin");
-    Object.assign(req, { model: null, other: "", carOk: false });
+    Object.assign(req, { model: null, gen: null, other: "", carOk: false });
     return go(1, req.brand ? "model" : "brand");
   }
   if (v === "brand") {
-    if (a !== req.brand) Object.assign(req, { brand: a, model: null, other: "", carOk: false });
+    if (a !== req.brand) Object.assign(req, { brand: a, model: null, gen: null, other: "", carOk: false });
     return go(1, "model");
   }
   if (v === "model") {
     if (a === "other") return go(1, "other");
-    Object.assign(req, { model: a, other: "", carOk: true });
+    if (a !== req.model) req.gen = null;
+    Object.assign(req, { model: a, other: "", carOk: false });
+    return carDone();
+  }
+  if (v === "year") {
+    req.gen = a === "?" ? "?" : +a;
+    req.carOk = true;
     return go(2);
   }
   if (v === "other") return otherNext();
   if (v === "parts") return a === "add" ? addDraft() : partsNext();
   if (v === "sum") {
-    go(a === "car" ? 1 : 2, a === "car" ? carView() : null);
+    // «Zmień» у авто — к выбору модели (марка уже известна)
+    go(a === "car" ? 1 : 2, a === "car" ? (req.brand ? "model" : carView()) : null);
     if (a === "dlv") $("rqBody").querySelector('[data-dlv][aria-pressed="true"]').focus();
     return;
   }
@@ -482,7 +514,7 @@ function vinNext() {
 function otherNext() {
   const val = $("rqOther").value.trim();
   if (!val) return rqErr(t("rq.other.err"), "rqOther");
-  Object.assign(req, { model: "other", other: val, carOk: true });
+  Object.assign(req, { model: "other", other: val, gen: null, carOk: true });
   go(2);
 }
 function partsNext() {
@@ -515,7 +547,7 @@ $("rqBody").addEventListener("keydown", (e) => {
 
 // Сообщение — одно для всех входов и каналов (§4.8 документа).
 function reqText() {
-  const car = carName();
+  const car = carFull();
   return [t("msg.hello"), `VIN: ${req.vin || t("rq.msg.novin")}`, car ? `${t("rq.msg.car")}: ${car}` : null,
     req.arena ? t("rq.msg.arena") : null, `${t("rq.msg.parts")}:`, ...req.parts.map((p) => "- " + partText(p)),
     `${t("rq.msg.dlv")}: ${t(req.urgent ? "rq.msg.express" : "rq.msg.sea")}`, `Lang: ${lang}`].filter(Boolean).join("\n");
