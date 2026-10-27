@@ -113,7 +113,6 @@ function setTab(tab) {
   $("searchArena").hidden = tab !== "arena";
   $("searchInput").placeholder = t(tab === "oe" ? "search.oe.ph" : "search.vin.ph");
   $("searchInput").classList.toggle("is-vin", tab === "vin");
-  $("searchNoVin").hidden = tab !== "vin";
   searchErr("");
   if (changed) vinClose();
 }
@@ -172,11 +171,6 @@ function vinWhere(on) {
 }
 $("searchInput").addEventListener("focus", () => vinWhere(state.tab === "vin"));
 $("searchInput").addEventListener("blur", () => vinWhere(false));
-// «Nie masz VIN pod ręką?» — на вкладку «Po marce» и сразу список марок (на телефоне это главный сценарий).
-$("searchNoVin").addEventListener("click", () => {
-  setTab("car");
-  setTimeout(() => $("searchCarB").querySelector(".pick__btn").click()); // после этого клика, иначе список закроется
-});
 
 /* ---------- Авто без VIN: Marka → Model → Rok ---------- */
 

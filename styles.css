@@ -198,13 +198,6 @@ html.is-dim .search-dim { opacity: 1; pointer-events: auto; }
 .search__alt a { font-weight: 700; color: var(--green); text-decoration: none; }
 /* «VIN poprawny» — только для скринридера: панель VIN выпадает поверх, высота первого экрана не должна меняться */
 .search__msg.is-ok { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-/* «Nie masz VIN? Wybierz model» — второй вход в ту же панель; ссылка .vinres__link (44 px по высоте) под полем.
-   При открытой панели не нужна. На телефоне — главный сценарий: во всю ширину, белым, крупнее по высоте. */
-.search .search__novin { display: block; margin: var(--sp-2) auto 0; }
-.search__novin[hidden], .search.is-lifted:has(.vinres:not([hidden])) .search__novin { display: none; }
-@media (max-width: 640px) {
-  .search .search__novin { width: 100%; min-height: 48px; color: #fff; text-decoration-color: rgba(255,255,255,.6); }
-}
 /* VIN в поле поиска и в необязательном поле панели — моноширинный верхний регистр, как в форме (плейсхолдер — обычным шрифтом) */
 .search__box input.is-vin:not(:placeholder-shown), .vinres__note input.is-vin:not(:placeholder-shown) { font-family: ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .04em; }
 
