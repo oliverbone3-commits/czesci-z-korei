@@ -220,6 +220,14 @@ main:focus { outline: none; }
 .models::-webkit-scrollbar { display: none; }
 .models__head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-4); }
 .models__head h2 { margin: 0 0 .3em; }
+.models__head h2:focus { outline: none; }
+/* Чип активного фильтра марки: белая капсула с «×», снимает фильтр */
+.models__flt-w { margin: 0 auto var(--sp-3) 0; }
+.models__flt { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 36px; padding: 0 var(--sp-3) 0 var(--sp-4); border: 0; border-radius: 999px;
+  background: #fff; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: 600 var(--fs-sm) var(--f-text); cursor: pointer; transition: box-shadow .2s; }
+.models__flt span { color: var(--muted); font-size: var(--fs-lg); line-height: 1; font-weight: 400; }
+.models__flt:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+.models__flt:hover span { color: var(--ink); }
 .models__nav { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .arrow { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #c4c9cd; background: #fff; color: var(--ink);
   font-size: 20px; font-weight: 700; cursor: pointer; transition: background .2s, border-color .2s, opacity .2s; }
@@ -250,6 +258,9 @@ main:focus { outline: none; }
 /* Кнопка на всю карточку — раскрыть; у раскрытой не перехватывает клики панели */
 .model__hit { position: absolute; inset: 0; z-index: 2; border: 0; padding: 0; background: none; font: inherit; color: inherit; cursor: pointer; border-radius: inherit; }
 .model.is-open .model__hit { pointer-events: none; }
+/* Фокус кнопки карточки — рамкой внутри самой карточки (у кнопки рамку обрезает overflow, снаружи — прокрутка ряда) */
+.model__hit:focus-visible { outline: 0; }
+.model:has(.model__hit:focus-visible) { outline: 3px solid var(--ink); outline-offset: -3px; }
 .model__name { position: absolute; left: 12px; right: 12px; bottom: 44px; font-size: var(--fs-lg); font-weight: 700; transition: opacity .25s; }
 .model__meta { position: absolute; left: 12px; right: 12px; bottom: 18px; font-size: var(--fs-sm); color: var(--muted); transition: opacity .25s; }
 .model.is-open .model__name, .model.is-open .model__meta { opacity: 0; }
@@ -485,10 +496,11 @@ main:focus { outline: none; }
 .how__ctl { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--muted); }
 .how__pause { min-height: 44px; padding: 0 var(--sp-4); border: 1px solid #c4c9cd; border-radius: 999px; background: #fff; color: var(--ink); font: 600 var(--fs-sm) var(--f-text); cursor: pointer; }
 .how__pause:hover { border-color: var(--ink); }
-.how__stage { display: flex; flex-direction: column; gap: var(--sp-5); min-height: 400px; padding: var(--sp-5); background: var(--canvas); border-radius: 24px; }
+/* «Krok N z 5» и карточки — одной группой по центру сцены (раньше карточки центровались отдельно — под подписью была пустота) */
+.how__stage { display: flex; flex-direction: column; justify-content: center; gap: var(--sp-5); min-height: 400px; padding: var(--sp-5); background: var(--canvas); border-radius: 24px; }
 .how__meta { display: flex; align-items: center; gap: var(--sp-3); font-size: var(--fs-sm); font-weight: 600; color: var(--muted); }
 .how__meta .ix--step { margin: 0; color: var(--ink); }
-.how__scene { display: flex; flex-direction: column; gap: var(--sp-2); margin-block: auto; }
+.how__scene { display: flex; flex-direction: column; gap: var(--sp-2); }
 .how__card { background: #fff; border-radius: 14px; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-ui); animation: howUp .45s cubic-bezier(.2,.8,.2,1) both; }
 .how__scene > :nth-child(2) { animation-delay: .08s; }
 .how__scene > :nth-child(3) { animation-delay: .16s; }
@@ -590,6 +602,8 @@ main:focus { outline: none; }
 .ticker::before, .ticker::after { content: ""; position: absolute; top: 0; bottom: 0; width: 80px; z-index: 1; pointer-events: none; }
 .ticker::before { left: 0; background: linear-gradient(90deg, var(--canvas), transparent); }
 .ticker::after { right: 0; background: linear-gradient(-90deg, var(--canvas), transparent); }
+/* У правого края — кнопка паузы: подписи гаснут до неё, а не уходят под неё */
+.ticker:has(.ticker__pause:not([hidden]))::after { width: 140px; background: linear-gradient(-90deg, var(--canvas) 72px, transparent); }
 .ticker__track { display: flex; width: max-content; animation: tickerRun 40s linear infinite; }
 .ticker:hover .ticker__track, .ticker:focus-within .ticker__track, .ticker__track.is-paused { animation-play-state: paused; }
 @keyframes tickerRun { to { transform: translateX(-50%); } }
@@ -604,8 +618,9 @@ main:focus { outline: none; }
 .ticker__pause:hover { border-color: var(--ink); }
 /* Без движения: одна лента, переносится по центру */
 @media (prefers-reduced-motion: reduce) {
-  .ticker__track { animation: none; width: auto; justify-content: center; }
-  .ticker__list { flex-wrap: wrap; justify-content: center; row-gap: var(--sp-4); }
+  .ticker__track { animation: none; width: auto; justify-content: center; padding: 0 var(--gutter); }
+  .ticker__list { flex: 1 1 auto; flex-wrap: wrap; justify-content: center; row-gap: var(--sp-4); }
+  .ticker__list li { white-space: normal; }
   .ticker::before, .ticker::after { display: none; }
   .ticker__list li:last-child::after { display: none; }
 }
@@ -615,6 +630,15 @@ main:focus { outline: none; }
   .ticker__list li::after { margin: 0 var(--sp-5); }
   .ticker__ph { width: 72px; height: 48px; border-radius: 12px; }
   .ticker::before, .ticker::after { width: 32px; }
+}
+/* Без движения на телефоне — столбик: фото слева, город и подпись справа, стрелки не нужны */
+@media (prefers-reduced-motion: reduce) and (max-width: 640px) {
+  .ticker__list { flex-direction: column; align-items: stretch; row-gap: var(--sp-3); }
+  .ticker__list li { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: var(--sp-3); align-items: center; }
+  .ticker__list li::after { display: none; }
+  .ticker__ph { grid-row: 1 / 3; }
+  .ticker__list b { align-self: end; font-size: var(--fs-xl); }
+  .ticker__list span { align-self: start; }
 }
 
 /* Бенефиты: заголовок слева, абзац + кнопка справа, ниже 4 светлые карточки */

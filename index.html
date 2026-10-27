@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&display=swap">
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip"></a>
@@ -77,7 +80,9 @@
   <section id="models" class="section">
     <div class="wrap">
       <div class="models__head">
-        <h2 class="reveal" data-i18n="models.h2"></h2>
+        <h2 class="reveal" data-i18n="models.h2" tabindex="-1"></h2>
+        <!-- Активный фильтр по логотипу марки из первого экрана — чип «Hyundai ×» (brands() в app.js) -->
+        <div class="models__flt-w" id="modelsFlt" hidden></div>
         <div class="models__nav">
           <button type="button" class="arrow" data-dir="-1" data-i18n-aria="models.prev">←</button>
           <button type="button" class="arrow" data-dir="1" data-i18n-aria="models.next">→</button>
@@ -292,7 +297,7 @@
   <section class="section cta-wrap">
     <div class="wrap">
       <div class="cta reveal">
-        <img class="cta__bg" src="img/photo/cta.jpg" alt="" loading="lazy">
+        <img class="cta__bg" src="img/photo/cta.jpg" srcset="img/photo/cta-1200.jpg 1200w, img/photo/cta.jpg 2200w" sizes="(max-width: 1280px) 100vw, 1232px" alt="" loading="lazy">
         <div class="cta__in">
           <ul class="cta__badges">
             <li data-i18n="cta.f1"></li>

@@ -125,6 +125,10 @@ const N = {
   cabin: { pl: "Filtr kabinowy węglowy", en: "Cabin filter, carbon" },
   air: { pl: "Filtr powietrza (G80 2.5T)", en: "Air filter (G80 2.5T)" },
 };
+// GV80 и G80 делят витрину genesis; fits — к каким моделям из POPULAR/CARS деталь подходит
+// (по research_notes/Проверка цен/genesis.md: салонный фильтр 97133-T6500 — обе, воздушный 28113-T1210 — G80 2.5T,
+// фара и решётка T6… — GV80). Без fits — ко всем моделям ключа витрины. По fits строятся панель карточки модели,
+// подсказки шага 2 окна заявки и предупреждение «Część z listy jest do …».
 const gv80 = (n) => Object.fromEntries(Object.entries(n).map(([k, v]) => [k, v + " (GV80)"]));
 
 const ITEMS = [
@@ -139,10 +143,10 @@ const ITEMS = [
   { model: "k8", cat: "lights", name: N.head, img: "head", oe: "92101-L8000", ours: 4316, pl: null, ems: 4933 },
   { model: "k8", cat: "lights", name: N.tail, img: "tail", oe: "92401-L8000", ours: 1556, pl: null, ems: 1867 },
   { model: "k8", cat: "body", name: N.mirror, img: "mirror", oe: "87610-L8011", ours: 845, pl: null, ems: 1161 },
-  { model: "genesis", cat: "service", name: N.cabin, img: "filter", oe: "97133-T6500", ours: 274, pl: 650, ems: 478 },
-  { model: "genesis", cat: "service", name: N.air, img: "filter", oe: "28113-T1210", ours: 164, pl: 320, ems: 367 },
-  { model: "genesis", cat: "lights", name: gv80(N.head), img: "head", oe: "92101-T6000", ours: 6237, pl: null, ems: 7200 },
-  { model: "genesis", cat: "body", name: gv80(N.grille), img: "grille", oe: "86350-T6610", ours: 2128, pl: null, ems: 4043 },
+  { model: "genesis", fits: ["gv80", "g80"], cat: "service", name: N.cabin, img: "filter", oe: "97133-T6500", ours: 274, pl: 650, ems: 478 },
+  { model: "genesis", fits: ["g80"], cat: "service", name: N.air, img: "filter", oe: "28113-T1210", ours: 164, pl: 320, ems: 367 },
+  { model: "genesis", fits: ["gv80"], cat: "lights", name: gv80(N.head), img: "head", oe: "92101-T6000", ours: 6237, pl: null, ems: 7200 },
+  { model: "genesis", fits: ["gv80"], cat: "body", name: gv80(N.grille), img: "grille", oe: "86350-T6610", ours: 2128, pl: null, ems: 4043 },
 ];
 
 // Комплекты — лист «Корзины». Отдельная секция #kits, фильтры витрины на неё не влияют. Наборов будет больше:
@@ -170,6 +174,6 @@ const BUNDLES = [
     name: { pl: "Serwis + hamulce", en: "Service + brakes" } },
   { model: "k8", car: "Kia K8 2.5", items: KIT_FULL, photos: PH_FULL, ours: 1617, pl: 3711, ems: 3879,
     name: { pl: "Serwis + hamulce", en: "Service + brakes" } },
-  { model: "genesis", car: "Genesis G80 2.5T", items: KIT_FILTERS, photos: [["filter", "×3"]], ours: 460, pl: 1140, ems: 746,
+  { model: "genesis", fits: ["g80"], car: "Genesis G80 2.5T", items: KIT_FILTERS, photos: [["filter", "×3"]], ours: 460, pl: 1140, ems: 746,
     name: { pl: "Serwis", en: "Service" } },
 ];

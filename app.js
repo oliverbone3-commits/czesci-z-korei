@@ -191,7 +191,7 @@ const modelName = () => (req.model === "other" ? req.other.trim() : (carModel() 
 const carName = () => [brandName(req.brand), modelName()].filter(Boolean).join(" ");
 // Поколение (gen — индекс в CARS[марка][модель].gens, "?" — «Nie wiem», null — не спрашивали): только без VIN —
 // с VIN подберём сами (10-й знак у KDM не проверен, на него не опираемся).
-const genYears = (g) => `${g.from}–${g.to || new Date().getFullYear()}`;
+const genYears = (g) => (g.to ? `${g.from}–${g.to}` : t("rq.year.from").replace("{y}", g.from));
 function genText() {
   const g = req.gen === "?" ? null : ((carModel() || {}).gens || [])[req.gen];
   return req.gen === "?" ? t("rq.year.unknown") : g ? `${genYears(g)} (${g.code})` : "";
@@ -212,6 +212,14 @@ function vinDecode(vin) {
   const hit = VIN_MODELS.find((x) => vin.startsWith(x.prefix));
   return { brand: VIN_BRANDS[vin.slice(0, 3)] || null, model: hit ? hit.model : null };
 }
+// VIN противоречит выбранной вручную марке или модели — убираем его, чтобы в заявке не было «VIN от Carnival + Staria».
+// Hyundai → Genesis не противоречие: у G80 2017–2019 WMI ещё был KMH.
+function vinClash(brand, model) {
+  if (!req.vin) return false;
+  const d = vinDecode(req.vin);
+  return (d.brand && brand && d.brand !== brand && !(d.brand === "hyundai" && brand === "genesis")) || (d.model && model && d.model !== model);
+}
+const dropVin = () => Object.assign(req, { vin: "", vinDraft: "" });
 function setVin(vin) {
   req.vinDraft = vin;
   if (vin === req.vin) return;
@@ -225,8 +233,12 @@ function carView() {
 }
 
 // Детали
-const itemPart = (it) => ({ id: "i" + ITEMS.indexOf(it), name: it.name, oe: it.oe, model: it.model });
-const kitPart = (b) => ({ id: "k" + BUNDLES.indexOf(b), name: b.name, kit: b.car || MODELS[b.model], model: b.model });
+// Подходит ли деталь (или набор) к модели: тот же ключ витрины и, если у неё есть fits, — эта модель
+// (GV80 и G80 делят витрину genesis, но фара — только GV80, воздушный фильтр — только G80).
+const fits = (x, v, key) => x.model === v && (!x.fits || !key || x.fits.includes(key));
+const fitName = (x) => (x.fits ? x.fits.map((k) => POPULAR.find((m) => m.key === k).name).join(" / ") : MODELS[x.model]);
+const itemPart = (it) => ({ id: "i" + ITEMS.indexOf(it), name: it.name, oe: it.oe, model: it.model, fits: it.fits });
+const kitPart = (b) => ({ id: "k" + BUNDLES.indexOf(b), name: b.name, kit: b.car || MODELS[b.model], model: b.model, fits: b.fits });
 const textPart = (s) => ({ id: "t" + s.toLowerCase(), name: s[0].toUpperCase() + s.slice(1) });
 const partName = (p) => (p.kit ? `${t("vit.kit")}: ` : "") + (p.name ? tr(typeof p.name === "string" ? { pl: p.name } : p.name) : `OE ${p.oe}`);
 const partText = (p) => partName(p) + (p.kit ? ` (${p.kit})` : p.name && p.oe ? ` (OE ${p.oe})` : "");
@@ -243,7 +255,7 @@ function sugList() {
   const v = (carModel() || {}).vitrine;
   if (!v) return { k: "rq.sug.common", list: COMMON_PARTS.map((n, i) => ({ id: "c" + i, name: n })) };
   const pct = (it) => (it.pl ? save(it.ours, it.pl) : -1);
-  return { k: "rq.sug.pop", list: ITEMS.filter((it) => it.model === v).sort((a, b) => pct(b) - pct(a)).slice(0, 3).map(itemPart) };
+  return { k: "rq.sug.pop", list: ITEMS.filter((it) => fits(it, v, req.model)).sort((a, b) => pct(b) - pct(a)).slice(0, 3).map(itemPart) };
 }
 
 /* Входы */
@@ -273,7 +285,7 @@ function reqVin(vin) { setVin(vin); reqOpen(1); }
 function reqOe(q) { reqFresh(); addPart(oePart(q)); reqOpen(req.carOk ? 2 : 1); }
 // «Wyślij VIN» на карточке модели: модель уже выбрана, VIN можно добавить в карточке подтверждения.
 function reqCar(m) {
-  if (req.vin && vinDecode(req.vin).brand !== m.brand) req.vin = "";
+  if (vinClash(m.brand, m.key)) dropVin();
   Object.assign(req, { brand: m.brand, model: m.key, gen: null, other: "", carOk: false });
   reqOpen(1, "ok");
 }
@@ -287,7 +299,8 @@ document.addEventListener("click", (e) => {
   if (d.askItem) addPart(itemPart(ITEMS[+d.askItem]));
   else if (d.askKit) addPart(kitPart(BUNDLES[+d.askKit]));
   else if (d.askKey) addPart({ id: "t" + d.askKey, name: { pl: I18N.pl[d.askKey], en: I18N.en[d.askKey] } });
-  if (d.req === "car") return reqOpen(1, "brand");
+  // «Nie masz VIN? Wybierz auto» — путь без VIN: номер из поиска в заявку не идёт
+  if (d.req === "car") { dropVin(); return reqOpen(1, "brand"); }
   if (d.req === "arena" || "arena" in d) { req.arena = true; return reqOpen(1, req.model ? "ok" : "brand"); }
   // С детали — на шаг деталей (видно, что добавилось), если авто уже есть; иначе сначала авто.
   reqOpen(d.askItem || d.askKit || d.askKey ? (req.carOk ? 2 : 1) : null);
@@ -343,7 +356,7 @@ function rqCar() {
     case "ok": {
       const vin = req.vin ? `<span class="rq__vin">${req.vin}</span>`
         : `<button type="button" class="rq__link" data-go="ok:vin">${t("rq.ok.addvin")}</button>`;
-      return ctx + head(t("rq.ok.h")) + `<div class="rq__car"><small>${esc(brandName(req.brand))}</small><b>${esc(carName())}</b>${vin}</div>
+      return ctx + head(t("rq.ok.h")) + `<div class="rq__car"><small>${esc(brandName(req.brand))}</small><b>${esc(modelName() || carName())}</b>${vin}</div>
         <div class="rq__btns"><button type="button" class="btn rq__go" data-go="ok:yes">${t("rq.ok.yes")} <span aria-hidden="true">›</span></button>
         <button type="button" class="btn btn--ghost rq__go" data-go="ok:no">${t("rq.ok.no")}</button></div>`;
     }
@@ -352,10 +365,13 @@ function rqCar() {
       return ctx + head(t("rq.model.h").replace("{b}", brandName(req.brand)), fromVin ? t("rq.model.vin") : "")
         + `<div class="rq__opts">${(CARS[req.brand] || []).map((m) => opt("model:" + m.key, esc(m.name))).join("")}${opt("model:other", t("rq.other"))}</div>`;
     }
-    case "brand":
-      return ctx + head(t("rq.brand.h"), req.vin ? t("rq.brand.vin") : "")
+    case "brand": {
+      // VIN есть, но марка по WMI не узнана — не тупик: пояснение и «Inna marka» (своё название авто)
+      const foreign = req.vin && !vinDecode(req.vin).brand;
+      return ctx + head(t("rq.brand.h"), foreign ? t("rq.brand.foreign") : req.vin ? t("rq.brand.vin") : "")
         + `<div class="rq__opts">${["kia", "hyundai", "genesis"].map((k) => BRANDS.find((b) => b.key === k)).map((b) =>
-          opt("brand:" + b.key, b.name, "", `<span class="rq__logo"><img src="${b.logo}" alt="" style="height:${b.h}px"></span>`)).join("")}</div>`;
+          opt("brand:" + b.key, b.name, "", `<span class="rq__logo"><img src="${b.logo}" alt="" style="height:${b.h}px"></span>`)).join("")}${foreign ? opt("brand:other", t("rq.brand.other")) : ""}</div>`;
+    }
     case "year": {
       // Последнее поколение сверху: слева годы крупно, справа muted код поколения; последней строкой «Nie wiem».
       const gens = (carModel() || {}).gens || [];
@@ -363,7 +379,8 @@ function rqCar() {
         opt("year:" + i, genYears(g), "", "", g.code)).join("")}${opt("year:?", t("rq.year.any"))}</div>`;
     }
     case "other":
-      return head(t("rq.other.h").replace("{b}", brandName(req.brand))) + field("rqOther", "", req.other, t("rq.other.ph")) + next("other:next");
+      return head(req.brand ? t("rq.other.h").replace("{b}", brandName(req.brand)) : t("rq.other.any.h"))
+        + field("rqOther", "", req.other, t(req.brand ? "rq.other.ph" : "rq.other.any.ph")) + next("other:next");
     default:
       return ctx + head(t("rq.how.h")) + `<div class="rq__opts">${opt("how:vin", t("rq.how.vin"), t("rq.how.vin.s"))}
         ${opt("how:novin", t("rq.how.novin"), t("rq.how.novin.s"))}${opt("how:arena", t("rq.how.arena"), t("rq.how.arena.s"))}</div>`;
@@ -391,7 +408,9 @@ function rqEms() {
   if (!el) return;
   const dear = req.urgent ? req.parts.filter((p) => { const x = partSrc(p); return x && x.pl && x.ems > x.pl; }) : [];
   el.hidden = !dear.length;
-  el.textContent = t("rq.dlv.ems").replace("{p}", dear.map(partName).join(", "));
+  // Одинаковые названия с разных моделей («Tarcza… , Tarcza…») — с моделью в скобках
+  const twin = (p) => dear.filter((x) => partName(x) === partName(p)).length > 1;
+  el.textContent = t("rq.dlv.ems").replace("{p}", dear.map((p) => partName(p) + (twin(p) && p.model ? ` (${fitShort(p)})` : "")).join(", "));
 }
 function rqList() {
   rqEms();
@@ -399,7 +418,7 @@ function rqList() {
     <button type="button" class="rq__rm" data-rm="${i}" aria-label="${t("rq.rm")}: ${esc(partName(p))}">×</button></li>`).join("");
   // Деталь с карточки для другой модели — тихая подпись под списком.
   const v = (carModel() || {}).vitrine;
-  const other = req.carOk ? [...new Set(req.parts.filter((p) => p.model && p.model !== v).map((p) => MODELS[p.model]))] : [];
+  const other = req.carOk ? [...new Set(req.parts.filter((p) => p.model && !fits(p, v, req.model)).map(fitName))] : [];
   $("rqWarn").hidden = !other.length;
   $("rqWarn").textContent = t("rq.warn").replace("{m}", other.join(", "));
   const sug = sugList(), left = sug.list.filter((p) => !req.parts.some((x) => x.id === p.id));
@@ -475,6 +494,7 @@ $("rqBody").addEventListener("click", (e) => {
   const [v, a] = g.dataset.go.split(":");
   if (v === "how") {
     req.arena = a === "arena";
+    if (a === "novin") dropVin();
     return go(1, a === "vin" ? "vin" : "brand");
   }
   if (v === "vin") return vinNext();
@@ -485,6 +505,9 @@ $("rqBody").addEventListener("click", (e) => {
     return go(1, req.brand ? "model" : "brand");
   }
   if (v === "brand") {
+    // «Inna marka» (VIN не корейской марки) — сразу своё название авто
+    if (a === "other") { Object.assign(req, { brand: null, model: null, gen: null, carOk: false }); return go(1, "other"); }
+    if (vinClash(a)) dropVin();
     if (a !== req.brand) Object.assign(req, { brand: a, model: null, gen: null, other: "", carOk: false });
     return go(1, "model");
   }
@@ -662,7 +685,7 @@ const STOPS = { e: ["seoul", "airport", "poland", "courier"], c: ["seoul", "busa
 let tickerStopped = REDUCED;
 function ticker() {
   const list = (hidden) => `<ul class="ticker__list"${hidden ? ' aria-hidden="true"' : ""}>` +
-    STOPS[dlvMode].map((img, i) => `<li><img class="ticker__ph" src="img/route/${img}.jpg" alt="" width="132" height="88"><b>${t(`ticker.${dlvMode}.${i + 1}.c`)}</b><span>${t(`ticker.${dlvMode}.${i + 1}.p`)}</span></li>`).join("") +
+    STOPS[dlvMode].map((img, i) => `<li><img class="ticker__ph" src="img/route/${img}.jpg" alt="" width="132" height="88" loading="lazy"><b>${t(`ticker.${dlvMode}.${i + 1}.c`)}</b><span>${t(`ticker.${dlvMode}.${i + 1}.p`)}</span></li>`).join("") +
     "</ul>";
   const track = $("tickerTrack");
   // Без движения — одна лента; с движением — четыре копии (хватает на широкий экран), анимация сдвигает на половину — бесшовно.
@@ -682,9 +705,20 @@ $("tickerPause").addEventListener("click", () => { tickerStopped = !tickerStoppe
 /* ---------- Модели и сравнение цен ---------- */
 
 function brands() {
+  // Активный фильтр по логотипу — чипом «Hyundai ×» у заголовка «Popularne modele», там же снимается
+  const b = BRANDS.find((x) => x.key === state.brand);
+  $("modelsFlt").hidden = !b;
+  $("modelsFlt").innerHTML = b ? `<button type="button" class="models__flt" data-brand-off aria-label="${t("models.flt.off")}: ${b.name}">${b.name} <span aria-hidden="true">×</span></button>` : "";
   $("brands").innerHTML = BRANDS.map((b) =>
     `<button type="button" class="brand${state.brand === b.key ? " is-on" : ""}" data-brand="${b.key}" aria-label="${b.name}" aria-pressed="${state.brand === b.key}"><img src="${b.logo}" alt="" style="height:${b.h}px"></button>`).join("");
 }
+$("modelsFlt").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-brand-off]")) return;
+  state.brand = null;
+  brands();
+  models();
+  $("models").querySelector("h2").focus({ preventScroll: true });
+});
 $("brands").addEventListener("click", (e) => {
   const b = e.target.closest("[data-brand]");
   if (!b) return;
@@ -707,11 +741,11 @@ function modelPanel(m) {
       <button type="button" class="btn btn--sm" data-act="vin">${t("nav.vin")} ›</button>`;
   }
   // Три самые выгодные детали модели из витрины.
-  const top = ITEMS.filter((it) => it.model === m.vitrine && it.pl)
+  const top = ITEMS.filter((it) => fits(it, m.vitrine, m.key) && it.pl)
     .sort((x, y) => save(y.ours, y.pl) - save(x.ours, x.pl)).slice(0, 3);
   return `<ul class="model__parts">${top.map((it) => `<li>
       <span>${tr(it.name)}</span>
-      <b>${zl(it.ours)}</b><s>${t("cmp.pl")} ${zl(it.pl)}</s>
+      <b>${t("price.from")}${zl(it.ours)}</b><s>${t("price.pl")}${zl(it.pl)}</s>
     </li>`).join("")}</ul>
     <button type="button" class="btn btn--sm" data-act="parts">${t("models.cta.parts")} ›</button>`;
 }
@@ -722,9 +756,10 @@ function models() {
   $("models-grid").innerHTML = list.map((m) => {
     let chip = `<span class="chip chip--soft">${t("models.vin")}</span>`, meta = t("models.vin.meta");
     if (m.vitrine) {
-      const priced = ITEMS.filter((it) => it.model === m.vitrine && it.pl);
+      const own = (x) => fits(x, m.vitrine, m.key);
+      const priced = ITEMS.filter((it) => own(it) && it.pl);
       const avg = Math.round(priced.reduce((s, it) => s + save(it.ours, it.pl), 0) / priced.length);
-      const count = ITEMS.filter((it) => it.model === m.vitrine).length + BUNDLES.filter((b) => b.model === m.vitrine).length;
+      const count = ITEMS.filter(own).length + BUNDLES.filter(own).length;
       chip = `<span class="chip">${t("models.avg")} <b>−${avg}%</b></span>`;
       meta = `${count} ${t("models.count")}`;
     }
@@ -736,14 +771,14 @@ function models() {
       pos = `--h:${h.toFixed(1)};--t:${(10 - roof * h).toFixed(1)};--cx:${cx}`;
     }
     const open = m.key === openKey;
-    const side = m.side ? `<img class="model__side" src="img/models/side/${m.key}.jpg" alt="" loading="lazy">` : "";
+    const side = m.side ? `<img class="model__side" src="img/models/side/${m.key}.jpg" srcset="img/models/side/${m.key}-1200.jpg 1200w, img/models/side/${m.key}.jpg 2000w" sizes="(max-width: 640px) 400px, 1100px" alt="" loading="lazy">` : "";
     return `<article class="model reveal${open ? " is-open" : ""}${m.side ? " has-side" : ""}" data-pop="${m.key}" style="${pos}">
       ${m.side ? side : `<img class="model__front" src="img/models/${m.key}.jpg" alt="" loading="lazy">`}
       ${chip}
-      <button type="button" class="model__hit" aria-expanded="${open}" aria-controls="mp-${m.key}">
+      <button type="button" class="model__hit" aria-expanded="${open}" aria-controls="mp-${m.key}"${open ? ' tabindex="-1"' : ""}>
         <span class="model__name">${m.name}</span><span class="model__meta">${meta}</span>
       </button>
-      <div class="model__panel" id="mp-${m.key}">
+      <div class="model__panel" id="mp-${m.key}"${open ? "" : " inert"}>
         <h3>${m.name}</h3><p class="model__sub">${meta}</p>
         ${modelPanel(m)}
       </div>
@@ -766,6 +801,8 @@ function models() {
   markModels();
 }
 
+// Фото профиля: 2000 px и уменьшенная копия <key>-1200.jpg (sips) — srcset/sizes подобраны так, что телефон (≤640, ~400 px × DPR 3)
+// и обычный экран берут 1200 px, ретина ПК — 2000 px. Новая модель — сделать обе версии.
 // Модели с боковым профилем (side): фото студии всегда закрывает всю карточку (без подложки и растушёвки).
 // Свёрнутая: перед машины у левого края, корма за правым. Раскрытая: кадр сдвигается (--slide), машина уходит
 // вправо за панель, под панелью — та же пустая студия из этого снимка. Колёса у всех на 83% высоты, машина ≈ 48–60% (сколько позволяет кадр).
@@ -797,7 +834,11 @@ function openModel(key, scroll = true) {
   cards.forEach((c) => {
     const on = c.dataset.pop === key;
     c.classList.toggle("is-open", on);
-    c.querySelector(".model__hit").setAttribute("aria-expanded", on);
+    const hit = c.querySelector(".model__hit");
+    hit.setAttribute("aria-expanded", on);
+    // Свёрнутая карточка — одна остановка Tab (сама карточка); невидимая панель — inert. У раскрытой фокус идёт сразу в панель.
+    hit.tabIndex = on ? -1 : 0;
+    c.querySelector(".model__panel").inert = !on;
   });
   markModels();
   if (scroll) {
@@ -906,6 +947,7 @@ function countUp(el, to) {
 // (кнопка растянута на всю карточку, переносит деталь в заявку).
 const SHORT = { carnival: "Carnival", k8: "K8", genesis: "Genesis" };
 const byModel = (x) => state.model === "all" || x.model === state.model;
+const fitShort = (x) => (x.fits ? x.fits.map((k) => POPULAR.find((m) => m.key === k).name.replace(/^\S+ /, "")).join(" / ") : SHORT[x.model]);
 
 function highlight(oe) {
   if (!state.q) return oe;
@@ -929,7 +971,7 @@ function card(it) {
   return `<article class="card">
     <div class="card__img"><img src="img/parts/${it.img}.jpg" alt="" loading="lazy">${chip}</div>
     <div class="card__body">
-      <p class="card__model">${state.model === "all" ? SHORT[it.model] + " · " : ""}${tr(CATEGORIES[it.cat])}</p>
+      <p class="card__model">${state.model === "all" || it.fits ? fitShort(it) + " · " : ""}${tr(CATEGORIES[it.cat])}</p>
       <h4>${tr(it.name)}</h4>
       <div class="price"><span class="price__ours">${t("price.from")}${zl(it.ours)}</span>${sub}</div>
     </div>
@@ -1064,7 +1106,7 @@ const pickModel = picker("pickModel", () => t("vit.model"),
 const pickCat = picker("pickCat", () => t("vit.cat"),
   () => {
     const have = new Set(ITEMS.filter(byModel).map((it) => it.cat));
-    return [["", t("filter.cats")], ...Object.keys(CATEGORIES).filter((c) => have.has(c)).map((c) => [c, tr(CATEGORIES[c])])];
+    return [["", t("filter.cats"), t("filter.all")], ...Object.keys(CATEGORIES).filter((c) => have.has(c)).map((c) => [c, tr(CATEGORIES[c])])];
   },
   () => state.cat ?? "",
   (c) => { state.cat = c || null; render(); });
@@ -1141,9 +1183,9 @@ function howScene(i) {
   const row = (a, b) => `<div class="how__card how__row">${a}${b}</div>`;
   const oes = `<span class="how__mono">${HOW_OE.join(" · ")}</span>`;
   switch (i) {
-    case 0: return `<div class="how__card how__vin"><span class="how__mono">KNA**********1234</span><span class="btn btn--sm" aria-hidden="true">${t("nav.vin")}</span></div>
+    case 0: return `<div class="how__card how__vin"><span class="how__mono">KNA**********1234</span><a class="btn btn--sm" href="#vin">${t("nav.vin")}</a></div>
       <div class="how__card"><small>${t("how.s1.need")}</small>${t("how.s1.list")}</div>
-      <div class="how__chips"><span class="chip chip--soft">${t("how.s1.form")}</span><span class="chip chip--soft">WhatsApp</span><span class="chip chip--soft">Telegram</span></div>`;
+      <div class="how__chips"><span class="chip chip--soft">WhatsApp</span><span class="chip chip--soft">Telegram</span><span class="chip chip--soft">E-mail</span></div>`;
     case 1: return parts.map((p) => row(`<span><span class="how__mono">${p.oe}</span><small>${tr(p.name)}</small></span>`, `<b>~${zl(p.ours)}</b>`)).join("")
       + row(`<span>${t("how.s2.total")}</span>`, `<span class="badge">${t("how.s2.badge")}</span>`);
     case 2: return `<div class="how__card"><small>${t("how.s3.ok")}</small>${oes}</div>`
@@ -1265,6 +1307,10 @@ function setLang(code) {
   if (code === lang) return;
   lang = code;
   try { localStorage.setItem("lang", lang); } catch (err) { /* без запоминания */ }
+  // ?lang= в адресе важнее сохранённого выбора — переписываем его, чтобы обновление страницы не вернуло прежний язык
+  const u = new URL(location.href);
+  if (lang === "pl") u.searchParams.delete("lang"); else u.searchParams.set("lang", lang);
+  history.replaceState(history.state, "", u);
   applyLang();
 }
 function langPick(code) {
