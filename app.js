@@ -180,7 +180,7 @@ $("searchForm").addEventListener("submit", (e) => {
 // Шаг 2 — детали, шаг 3 — сводка и канал (WhatsApp / Telegram / e-mail), "done" — честный статус и запасной путь.
 // Год не спрашиваем и не показываем: 10-й знак VIN у KDM не проверен (VIN_YEARS в data.js).
 // parts: { id, name (строка или { pl, en }), oe, model (ключ витрины), kit (подпись авто набора) }.
-const req = { vin: "", brand: null, model: null, gen: null, other: "", carOk: false, arena: false, parts: [], urgent: true, draft: "", vinDraft: "" };
+const req = { vin: "", brand: null, model: null, gen: null, other: "", carOk: false, arena: false, parts: [], urgent: false, draft: "", vinDraft: "" };
 const rq = { step: 1, view: "how", hist: [], done: null, copied: false };
 const dlg = $("vinDlg");
 let opener = null;
@@ -253,7 +253,7 @@ function sugList() {
 // После отправки — новая заявка на то же авто: детали и срочность сбрасываются (до того, как вход добавит свою деталь).
 function reqFresh() {
   if (rq.step !== "done") return;
-  Object.assign(req, { parts: [], urgent: true, draft: "" });
+  Object.assign(req, { parts: [], urgent: false, draft: "" });
   rq.step = 1;
 }
 function reqOpen(step, view) {
@@ -377,13 +377,24 @@ function rqParts() {
     <p class="rq__err" id="rqErr" role="alert"></p></div>
     <p class="rq__sug" id="rqSug"></p>
     <div class="rq__dlv" role="group" aria-labelledby="rqDlvK"><p class="rq__k" id="rqDlvK">${t("rq.sum.dlv")}</p>
-      <div class="seg">${[["e", true], ["c", false]].map(([m, on]) => `<button type="button" data-dlv="${m}" aria-pressed="${req.urgent === on}">
+      <div class="seg">${[["c", false], ["e", true]].map(([m, on]) => `<button type="button" data-dlv="${m}" aria-pressed="${req.urgent === on}">
         ${t(`del.${m}.tab`)}<small>${t(`rq.dlv.${m}.s`)}</small></button>`).join("")}</div>
-      <p class="rq__sub">${t("rq.dlv.note")}</p></div>
+      <p class="rq__sub">${t("rq.dlv.note")}</p><p class="rq__sub" id="rqEms" hidden></p></div>
     <p class="rq__sub">${t("rq.photo")}</p>` + next("parts:next");
 }
 // Список выбранных деталей и подсказки — без перерисовки поля (на телефоне клавиатура не прячется).
+// Деталь витрины или набор, которые экспрессом выйдут дороже, чем новые в Польше (ems > pl, data.js), — тихая строка
+// под выбором доставки, пока выбран экспресс.
+const partSrc = (p) => (p.id[0] === "i" ? ITEMS : p.id[0] === "k" ? BUNDLES : [])[+p.id.slice(1)];
+function rqEms() {
+  const el = $("rqEms");
+  if (!el) return;
+  const dear = req.urgent ? req.parts.filter((p) => { const x = partSrc(p); return x && x.pl && x.ems > x.pl; }) : [];
+  el.hidden = !dear.length;
+  el.textContent = t("rq.dlv.ems").replace("{p}", dear.map(partName).join(", "));
+}
 function rqList() {
+  rqEms();
   $("rqList").innerHTML = req.parts.map((p, i) => `<li class="rq__chip"><span>${esc(partName(p))}${p.name && p.oe ? ` <small>OE ${p.oe}</small>` : ""}${p.kit ? ` <small>${esc(p.kit)}</small>` : ""}</span>
     <button type="button" class="rq__rm" data-rm="${i}" aria-label="${t("rq.rm")}: ${esc(partName(p))}">×</button></li>`).join("");
   // Деталь с карточки для другой модели — тихая подпись под списком.
@@ -452,10 +463,11 @@ $("rqBody").addEventListener("click", (e) => {
   if (sug) { addPart(sugList().list.find((p) => p.id === sug.dataset.sug)); rqErr("", "rqAdd"); rqList(); return $("rqAdd").focus(); }
   const ch = e.target.closest("[data-ch]");
   if (ch) return rqSent(ch.dataset.ch);
-  // Доставка: ekspres (самолёт, дороже) или morzem (контейнер, дешевле) — переключатель .seg, по умолчанию ekspres (как в блоке доставки)
+  // Доставка: ekspres (самолёт, дороже) или morzem (контейнер, дешевле) — переключатель .seg, по умолчанию morzem (2026-10-27: экспресс выгоден только лёгким деталям, docs/research/ems_vs_container.md)
   const dl = e.target.closest("[data-dlv]");
   if (dl) {
     req.urgent = dl.dataset.dlv === "e";
+    rqEms();
     return $("rqBody").querySelectorAll("[data-dlv]").forEach((b) => b.setAttribute("aria-pressed", String(b === dl)));
   }
   const g = e.target.closest("[data-go]");

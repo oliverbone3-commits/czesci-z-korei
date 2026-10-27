@@ -1,6 +1,8 @@
 // Витрина пилота: позиции, которые по «Проверка цен.xlsx» выгодно везти
 // (вердикт «Выгодно» или «Нового в PL нет»). Цены — ориентир, доставка контейнером.
 // ours — наша цена брутто, zł; pl — цена нового в Польше, zł (null — нового в продаже нет).
+// ems — цена клиенту, если везти экспрессом EMS (docs/research/ems_vs_container.md, вес — оценки таблицы):
+// в окне заявки при выборе экспресса, если ems > pl, — тихая строка «Ekspresem drożej niż w Polsce».
 // Тексты — на всех языках сайта: { pl, en }.
 
 // Дата сверки цен в «Проверка цен.xlsx» (курс NBP на этот день). Показывается подписью у витрины, наборов и сравнения.
@@ -126,21 +128,21 @@ const N = {
 const gv80 = (n) => Object.fromEntries(Object.entries(n).map(([k, v]) => [k, v + " (GV80)"]));
 
 const ITEMS = [
-  { model: "carnival", cat: "body", name: N.grille, img: "grille", oe: "86350-R0000", ours: 1014, pl: 2063 },
-  { model: "carnival", cat: "suspension", name: N.strut, img: "strut", oe: "54650-R0000", ours: 701, pl: 1363 },
-  { model: "carnival", cat: "brakes", name: N.disc, img: "disc", oe: "51712-R0150", ours: 664, pl: 1212 },
-  { model: "carnival", cat: "brakes", name: N.pads, img: "pads", oe: "58101-R0A00", ours: 520, pl: 722 },
-  { model: "carnival", cat: "lights", name: N.tail, img: "tail", oe: "92401-R0000", ours: 496, pl: 785 },
-  { model: "carnival", cat: "lights", name: N.head, img: "head", oe: "92101-R0000", ours: 2773, pl: null },
-  { model: "k8", cat: "brakes", name: N.disc, img: "disc", oe: "51712-L1100", ours: 553, pl: 1360 },
-  { model: "k8", cat: "brakes", name: N.pads, img: "pads", oe: "58101-L0A11", ours: 485, pl: 704 },
-  { model: "k8", cat: "lights", name: N.head, img: "head", oe: "92101-L8000", ours: 4316, pl: null },
-  { model: "k8", cat: "lights", name: N.tail, img: "tail", oe: "92401-L8000", ours: 1556, pl: null },
-  { model: "k8", cat: "body", name: N.mirror, img: "mirror", oe: "87610-L8011", ours: 845, pl: null },
-  { model: "genesis", cat: "service", name: N.cabin, img: "filter", oe: "97133-T6500", ours: 274, pl: 650 },
-  { model: "genesis", cat: "service", name: N.air, img: "filter", oe: "28113-T1210", ours: 164, pl: 320 },
-  { model: "genesis", cat: "lights", name: gv80(N.head), img: "head", oe: "92101-T6000", ours: 6237, pl: null },
-  { model: "genesis", cat: "body", name: gv80(N.grille), img: "grille", oe: "86350-T6610", ours: 2128, pl: null },
+  { model: "carnival", cat: "body", name: N.grille, img: "grille", oe: "86350-R0000", ours: 1014, pl: 2063, ems: 2357 },
+  { model: "carnival", cat: "suspension", name: N.strut, img: "strut", oe: "54650-R0000", ours: 701, pl: 1363, ems: 1190 },
+  { model: "carnival", cat: "brakes", name: N.disc, img: "disc", oe: "51712-R0150", ours: 664, pl: 1212, ems: 1757 },
+  { model: "carnival", cat: "brakes", name: N.pads, img: "pads", oe: "58101-R0A00", ours: 520, pl: 722, ems: 864 },
+  { model: "carnival", cat: "lights", name: N.tail, img: "tail", oe: "92401-R0000", ours: 496, pl: 785, ems: 807 },
+  { model: "carnival", cat: "lights", name: N.head, img: "head", oe: "92101-R0000", ours: 2773, pl: null, ems: 3995 },
+  { model: "k8", cat: "brakes", name: N.disc, img: "disc", oe: "51712-L1100", ours: 553, pl: 1360, ems: 1532 },
+  { model: "k8", cat: "brakes", name: N.pads, img: "pads", oe: "58101-L0A11", ours: 485, pl: 704, ems: 776 },
+  { model: "k8", cat: "lights", name: N.head, img: "head", oe: "92101-L8000", ours: 4316, pl: null, ems: 4933 },
+  { model: "k8", cat: "lights", name: N.tail, img: "tail", oe: "92401-L8000", ours: 1556, pl: null, ems: 1867 },
+  { model: "k8", cat: "body", name: N.mirror, img: "mirror", oe: "87610-L8011", ours: 845, pl: null, ems: 1161 },
+  { model: "genesis", cat: "service", name: N.cabin, img: "filter", oe: "97133-T6500", ours: 274, pl: 650, ems: 478 },
+  { model: "genesis", cat: "service", name: N.air, img: "filter", oe: "28113-T1210", ours: 164, pl: 320, ems: 367 },
+  { model: "genesis", cat: "lights", name: gv80(N.head), img: "head", oe: "92101-T6000", ours: 6237, pl: null, ems: 7200 },
+  { model: "genesis", cat: "body", name: gv80(N.grille), img: "grille", oe: "86350-T6610", ours: 2128, pl: null, ems: 4043 },
 ];
 
 // Комплекты — лист «Корзины». Отдельная секция #kits, фильтры витрины на неё не влияют. Наборов будет больше:
@@ -164,10 +166,10 @@ const KIT_FULL = [...KIT_FILTERS, [KIT.pads, QTY.set], [KIT.discs, QTY.two]];
 const PH_FULL = [["filter", "×3"], ["pads", ""], ["disc", "×2"]];
 
 const BUNDLES = [
-  { model: "carnival", items: KIT_FULL, photos: PH_FULL, ours: 1901, pl: 3487,
+  { model: "carnival", items: KIT_FULL, photos: PH_FULL, ours: 1901, pl: 3487, ems: 4411,
     name: { pl: "Serwis + hamulce", en: "Service + brakes" } },
-  { model: "k8", car: "Kia K8 2.5", items: KIT_FULL, photos: PH_FULL, ours: 1617, pl: 3711,
+  { model: "k8", car: "Kia K8 2.5", items: KIT_FULL, photos: PH_FULL, ours: 1617, pl: 3711, ems: 3879,
     name: { pl: "Serwis + hamulce", en: "Service + brakes" } },
-  { model: "genesis", car: "Genesis G80 2.5T", items: KIT_FILTERS, photos: [["filter", "×3"]], ours: 460, pl: 1140,
+  { model: "genesis", car: "Genesis G80 2.5T", items: KIT_FILTERS, photos: [["filter", "×3"]], ours: 460, pl: 1140, ems: 746,
     name: { pl: "Serwis", en: "Service" } },
 ];
