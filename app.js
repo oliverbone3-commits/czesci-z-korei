@@ -72,7 +72,7 @@ function messengerLinks() {
 function footContacts() {
   $("footWa").textContent = PHONE;
   $("footTg").textContent = "@" + TELEGRAM_USER;
-  $("footMail").textContent = CONTACT_EMAIL;
+  $("footMailTxt").textContent = CONTACT_EMAIL;
   $("footMail").href = `mailto:${CONTACT_EMAIL}`;
 }
 
@@ -389,8 +389,8 @@ function rqSend() {
       + (p.kit ? ` <span class="rq__oe">${esc(p.kit)}</span>` : "")).join("<br>"), "sum:parts")}
     ${row("rq.sum.dlv", t(req.urgent ? "rq.dlv.e" : "rq.dlv.c"), "sum:dlv")}</dl>
     <a class="btn rq__go rq__ch" data-ch="wa" target="_blank" rel="noopener">${ix("whatsapp")}<span>${t("rq.wa")}</span> <span aria-hidden="true">›</span></a>
-    <div class="rq__alts"><a class="btn btn--ghost rq__ch" data-ch="tg" target="_blank" rel="noopener">${ix("send-2")}Telegram</a>
-      <a class="btn btn--ghost rq__ch" data-ch="mail">${ix("sms")}E-mail</a></div>
+    <div class="rq__alts"><a class="btn btn--ghost rq__ch" data-ch="tg" target="_blank" rel="noopener">${ix("telegram")}Telegram</a>
+      <a class="btn btn--ghost rq__ch" data-ch="mail">${ix("mail")}E-mail</a></div>
     <p class="rq__sub">${t("rq.send.note")}</p>`;
 }
 
@@ -401,7 +401,7 @@ function rqDone() {
   const chat = `<a class="rq__link" href="https://t.me/${TELEGRAM_USER}" target="_blank" rel="noopener">${t("rq.done.tg.open")} ›</a>`;
   const title = ch === "tg" ? t(ok ? "rq.done.tg" : "rq.done.tg.fail") : t("rq.done." + ch);
   const p = ch !== "tg" ? t("rq.done.p") : ok ? chat : `${t("rq.done.tg.fail.p")}<br>${chat}`;
-  return `<span class="rq__ok">${ix({ wa: "whatsapp", tg: "send-2", mail: "sms" }[ch])}</span>` + head(title) + `<p class="rq__sub">${p}</p>
+  return `<span class="rq__ok">${ix({ wa: "whatsapp", tg: "telegram", mail: "mail" }[ch])}</span>` + head(title) + `<p class="rq__sub">${p}</p>
     <div class="rq__fb"><b>${t("rq.fb.h")}</b>
       <button type="button" class="btn btn--ghost btn--sm" data-go="done:copy">${t(rq.copied ? "rq.copied" : "rq.copy")}</button>
       <p class="rq__sub">WhatsApp ${PHONE} · Telegram @${TELEGRAM_USER} · ${CONTACT_EMAIL}</p></div>
@@ -1051,8 +1051,8 @@ addEventListener("resize", kitsNav);
 // Акцент — «od 2 tygodni»: ekspres первый и по умолчанию. Срок — в переключателе и заголовке, поэтому
 // наклейка «Czas» не нужна: коллаж из трёх светлых наклеек — Koszt, Dla jakich części и одна по режиму.
 // Остальное (номер для отслеживания, 3+ контейнера) — в абзаце; вопросы-ответы — обычным текстом слева.
-const STICKERS = [["cost", "card-tick"], ["for", "box-tick"]];
-const EXTRAS = { e: ["x2", "camera"], c: ["x2", "receipt"] };
+const STICKERS = [["cost", "credit-card"], ["for", "package-check"]];
+const EXTRAS = { e: ["x2", "camera"], c: ["x2", "receipt-text"] };
 let dlvMode = "e";
 function delivery() {
   const m = dlvMode;
@@ -1081,7 +1081,7 @@ $("delSwitch").addEventListener("click", (e) => {
 // Вариант C «Przewodnik». У шага метка Ty / My — видно, что от клиента три коротких действия.
 // Автопоказ: 6 с на шаг, пока блок на экране, один круг и стоп; пауза при наведении/фокусе и кнопкой,
 // клик по шагу выключает автопоказ; при reduced motion автопоказа нет. ≤960 px сцена переезжает под активный шаг.
-const HOW = [["search-normal", "you"], ["receipt-text", "us"], ["card-tick", "you"], ["camera", "us"], ["box-tick", "you"]];
+const HOW = [["search", "you"], ["file-text", "us"], ["credit-card", "you"], ["camera", "us"], ["package-check", "you"]];
 const HOW_OE = ["58101-R0A00", "51712-R0150"];
 const howMq = matchMedia("(max-width: 960px)");
 const howStage = $("howStage");

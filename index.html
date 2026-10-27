@@ -63,10 +63,10 @@
 
       <!-- Факты — «наклейки» с иконкой, слегка наклонены -->
       <ul class="facts">
-        <li class="sticker st-1"><span class="ix" data-ix="discount-shape"></span><span data-i18n="fact.4"></span></li>
-        <li class="sticker st-2"><span class="ix" data-ix="receipt"></span><span data-i18n="fact.1"></span></li>
-        <li class="sticker st-3"><span class="ix" data-ix="verify"></span><span data-i18n="fact.3"></span></li>
-        <li class="sticker st-4"><span class="ix" data-ix="airplane"></span><span data-i18n="fact.2"></span></li>
+        <li class="sticker st-1"><span class="ix" data-ix="badge-percent"></span><span data-i18n="fact.4"></span></li>
+        <li class="sticker st-2"><span class="ix" data-ix="receipt-text"></span><span data-i18n="fact.1"></span></li>
+        <li class="sticker st-3"><span class="ix" data-ix="badge-check"></span><span data-i18n="fact.3"></span></li>
+        <li class="sticker st-4"><span class="ix" data-ix="plane"></span><span data-i18n="fact.2"></span></li>
         <li class="sticker st-5"><span class="ix" data-ix="ship"></span><span data-i18n="fact.5"></span></li>
       </ul>
     </div>
@@ -235,13 +235,13 @@
       </div>
       <div class="perks__grid">
         <article class="perk reveal">
-          <span class="ix ix--perk" data-ix="search-normal"></span>
+          <span class="ix ix--perk" data-ix="search"></span>
           <p class="perk__tag" data-i18n="trust.pick.tag"></p>
           <h3 data-i18n="trust.pick.h"></h3>
           <p data-i18n="trust.pick.p"></p>
         </article>
         <article class="perk reveal">
-          <span class="ix ix--perk" data-ix="discount-shape"></span>
+          <span class="ix ix--perk" data-ix="badge-percent"></span>
           <p class="perk__tag" data-i18n="trust.price.tag"></p>
           <h3 data-i18n="trust.price.h"></h3>
           <p data-i18n="trust.price.p"></p>
@@ -253,7 +253,7 @@
           <p data-i18n="trust.ship.p"></p>
         </article>
         <article class="perk reveal">
-          <span class="ix ix--perk" data-ix="verify"></span>
+          <span class="ix ix--perk" data-ix="badge-check"></span>
           <p class="perk__tag" data-i18n="trust.sure.tag"></p>
           <h3 data-i18n="trust.sure.h"></h3>
           <p data-i18n="trust.sure.p"></p>
@@ -341,9 +341,9 @@
         <div class="foot__col">
           <h2 data-i18n="foot.contact"></h2>
           <ul>
-            <li><a data-msg="wa" target="_blank" rel="noopener">WhatsApp <span class="foot__val" id="footWa"></span></a></li>
-            <li><a data-msg="tg" target="_blank" rel="noopener">Telegram <span class="foot__val" id="footTg"></span></a></li>
-            <li><a id="footMail"></a></li>
+            <li><a class="foot__ch" data-msg="wa" target="_blank" rel="noopener"><span class="ix" data-ix="whatsapp"></span>WhatsApp <span class="foot__val" id="footWa"></span></a></li>
+            <li><a class="foot__ch" data-msg="tg" target="_blank" rel="noopener"><span class="ix" data-ix="telegram"></span>Telegram <span class="foot__val" id="footTg"></span></a></li>
+            <li><a class="foot__ch" id="footMail"><span class="ix" data-ix="mail"></span><span id="footMailTxt"></span></a></li>
           </ul>
           <p class="foot__dim" data-i18n="foot.reply"></p>
           <a class="btn btn--sm" href="#vin"><span data-i18n="nav.vin"></span> <span aria-hidden="true">›</span></a>

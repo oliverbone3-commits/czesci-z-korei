@@ -179,7 +179,7 @@ main:focus { outline: none; }
   box-shadow: 0 8px 20px rgba(0,0,0,.25);
   animation: stickIn .55s cubic-bezier(.3,1.5,.5,1) backwards; transition: transform .3s cubic-bezier(.3,1.6,.5,1), border-color .3s; }
 .sticker b { display: block; font-size: var(--fs-ui); line-height: 1.2; color: #fff; }
-.sticker .ix { width: 24px; height: 24px; color: var(--green); --ix-accent: rgba(255,255,255,.55); }
+.sticker .ix { width: 24px; height: 24px; color: var(--green); }
 .sticker:hover { transform: rotate(0deg) scale(1.03); border-color: rgba(0,194,89,.5); }
 .st-1 { --rot: -2deg; } .st-2 { --rot: 1.5deg; animation-delay: .1s; } .st-3 { --rot: 2deg; animation-delay: .2s; }
 .st-4 { --rot: -1.5deg; animation-delay: .3s; } .st-5 { --rot: 1deg; animation-delay: .4s; }
@@ -543,7 +543,7 @@ main:focus { outline: none; }
 .sticker--light b { color: var(--ink); }
 .sticker--light small { display: block; font-size: var(--fs-legal); font-weight: 600; color: var(--muted); text-transform: none; margin-bottom: 1px; }
 .sticker--light > span:last-child > span { display: block; font-size: var(--fs-sm); }
-.sticker--light .ix { width: 28px; height: 28px; color: var(--ink); --ix-accent: var(--green-text); }
+.sticker--light .ix { width: 28px; height: 28px; color: var(--green-text); }
 .sticker--light:hover { border-color: var(--green); }
 /* Коллаж: три наклейки внахлёст под разными углами, крупнее, чем в ряду; наведённая — поверх остальных */
 .dlv__stickers { list-style: none; padding: 0; margin: 0; position: relative; align-self: center; height: 300px; }
@@ -782,12 +782,11 @@ html:has(.dlg[open]) { overflow: hidden; }
 .rq__oe { font-size: var(--fs-sm); font-weight: 400; color: var(--muted); white-space: nowrap; }
 /* Каналы: WhatsApp — главная зелёная, под ней в ряд Telegram и E-mail с обводкой */
 .rq__ch { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); }
-.rq__ch .ix { --ix-accent: currentColor; }
 .rq__alts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
 .rq__alts .rq__ch { min-height: 52px; }
 /* Готово: зелёный круг с иконкой канала, запасной путь серым блоком */
 .rq__ok { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: var(--green-ink); }
-.rq__ok .ix { width: 32px; height: 32px; --ix-accent: var(--green-ink); }
+.rq__ok .ix { width: 32px; height: 32px; }
 .rq__fb { display: grid; justify-items: start; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); background: var(--canvas); border-radius: var(--r); }
 .rq__fb .rq__sub { overflow-wrap: anywhere; }
 .rq__msg { width: 100%; padding: var(--sp-3); font: inherit; font-size: var(--fs-sm); color: var(--ink); background: #fff; border: 1px solid var(--field-border); border-radius: 12px; resize: vertical; }
@@ -820,6 +819,8 @@ html:has(.dlg[open]) { overflow: hidden; }
 .foot__col a:not(.btn) { color: var(--on-black); text-decoration: none; }
 .foot__col a:not(.btn):hover { color: #fff; }
 .foot__val { color: #7d8387; white-space: nowrap; }
+.foot__ch { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.foot__ch .ix { width: 18px; height: 18px; }
 .foot__dim { color: #7d8387; }
 .foot__col > .foot__dim { margin: var(--sp-4) 0 var(--sp-3); }
 .foot .foot__addr { margin-top: var(--sp-5); color: #fff; }
@@ -842,44 +843,32 @@ html:has(.dlg[open]) { overflow: hidden; }
   .foot__bar { flex-wrap: wrap; }
 }
 
-/* Иконки Iconsax (icons.js): основной тон — цвет текста, второй (.ix-2) — зелёный Arena */
-.ix { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; --ix-accent: #00a34a; }
+/* Иконки Lucide (icons.js): контур 1,75 цвета текста; WhatsApp и Telegram — заливка (Simple Icons) */
+.ix { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; }
 .ix svg { width: 100%; height: 100%; overflow: visible; }
-.ix .ix-2 { color: var(--ix-accent); opacity: 1; }
 .ix--step { width: 44px; height: 44px; margin-bottom: var(--sp-3); }
-.ix--perk { width: 52px; height: 52px; padding: var(--sp-3); border-radius: 50%; background: var(--green-pale); color: var(--ink); --ix-accent: var(--green-text); }
+.ix--perk { width: 52px; height: 52px; padding: var(--sp-3); border-radius: 50%; background: var(--green-pale); color: var(--ink); }
 .ix--step, .ix--perk { display: grid; }
+/* Толщина на экране везде ~1,75 px: у крупных иконок контур в viewBox тоньше (24 px → 1,75) */
+:is(.sticker--light, .ix--perk) svg { stroke-width: 1.5; }
+.rq__ok svg { stroke-width: 1.3; }
+.dlv__stickers .sticker .ix svg { stroke-width: 1.2; }
+.ix--step svg { stroke-width: 1; }
+.foot__ch svg { stroke-width: 2.25; }
 
-/* Прорисовка линий: в плитках и комплектах — при загрузке, в остальных блоках — при появлении */
-.ix path { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.sticker .ix path { animation: ixDraw 1s cubic-bezier(.4,0,.2,1) .1s forwards; }
-.rq__ch .ix path, .rq__ok .ix path { animation: ixDraw .8s cubic-bezier(.4,0,.2,1) .1s forwards; } /* каналы и «готово» в окне заявки — прорисовка при показе шага */
-.reveal.is-in .ix path { animation: ixDraw 1.1s cubic-bezier(.4,0,.2,1) .2s forwards; }
-.ix .ix-2 path { animation-delay: .5s !important; }
+/* Прорисовка контура: в наклейках и окне заявки — при показе, в остальных блоках — при появлении */
+:is(.sticker, .rq__ch, .rq__ok, .reveal) .ix :is(path, circle, rect, line) { stroke-dasharray: 1; stroke-dashoffset: 1; }
+:is(.sticker, .rq__ch, .rq__ok) .ix :is(path, circle, rect, line) { animation: ixDraw .8s cubic-bezier(.4,0,.2,1) .1s forwards; }
+.reveal.is-in .ix :is(path, circle, rect, line) { animation: ixDraw 1s cubic-bezier(.4,0,.2,1) .2s forwards; }
 @keyframes ixDraw { to { stroke-dashoffset: 0; } }
 
-/* Движение при наведении — у каждой иконки своё */
-:is(.how__stage, .perk, .card, .sticker):hover .ix svg { animation: var(--ix-hover) both; }
-.ix[data-ix="ship"] { --ix-hover: ixBob 1.2s ease-in-out infinite; }
-.ix[data-ix="airplane"] { --ix-hover: ixFly .9s cubic-bezier(.5,0,.5,1) infinite; }
-.ix[data-ix="car"], .ix[data-ix="truck-fast"] { --ix-hover: ixDrive .5s ease-in-out infinite alternate; }
-.ix[data-ix="speedometer"] { --ix-hover: ixTilt .6s ease-in-out infinite alternate; }
-.ix[data-ix="setting"] { --ix-hover: ixSpin 1.6s linear infinite; }
-.ix[data-ix="drop"] { --ix-hover: ixDrip .9s ease-in infinite; }
-.ix[data-ix="lamp-charge"] { --ix-hover: ixGlow .7s ease-in-out infinite alternate; }
-.ix[data-ix="search-normal"] { --ix-hover: ixScan 1.1s ease-in-out infinite; }
-.ix[data-ix^="receipt"] { --ix-hover: ixPrint .8s ease-in-out infinite alternate; }
-.ix[data-ix$="-tick"], .ix[data-ix="verify"], .ix[data-ix="camera"] { --ix-hover: ixPop .6s cubic-bezier(.3,1.6,.5,1) 1; }
-@keyframes ixBob { 50% { transform: translateY(-3px) rotate(-4deg); } }
-@keyframes ixFly { 0% { transform: translate(0, 0); } 45% { transform: translate(40%, -40%); opacity: 0; } 55% { transform: translate(-40%, 40%); opacity: 0; } 100% { transform: translate(0, 0); opacity: 1; } }
-@keyframes ixDrive { from { transform: translateX(-2px); } to { transform: translateX(3px); } }
-@keyframes ixTilt { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
-@keyframes ixSpin { to { transform: rotate(360deg); } }
-@keyframes ixDrip { 0% { transform: translateY(-2px) scaleY(.95); } 70% { transform: translateY(2px) scaleY(1.05); } 100% { transform: translateY(-2px); } }
-@keyframes ixGlow { to { filter: drop-shadow(0 0 6px #00c259); } }
-@keyframes ixScan { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-2px, -2px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(1px, 2px); } }
-@keyframes ixPrint { from { transform: translateY(1px); } to { transform: translateY(-3px); } }
-@keyframes ixPop { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+/* При наведении на карточку — один короткий сдвиг, у транспорта по направлению движения */
+:is(.how__stage, .perk, .card, .sticker):hover .ix svg { animation: var(--ix-hover, ixLift) .5s cubic-bezier(.3,1.4,.5,1) both; }
+.ix[data-ix="ship"] { --ix-hover: ixSail; }
+.ix[data-ix="plane"] { --ix-hover: ixFly; }
+@keyframes ixLift { 50% { transform: translateY(-2px); } }
+@keyframes ixSail { 50% { transform: translateX(2px) rotate(-3deg); } }
+@keyframes ixFly { 50% { transform: translate(2px, -2px); } }
 
 /* Появление при прокрутке */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1); }
@@ -890,7 +879,7 @@ html:has(.dlg[open]) { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
-  .ix path { stroke-dashoffset: 0; }
+  :is(.sticker, .rq__ch, .rq__ok, .reveal) .ix :is(path, circle, rect, line) { stroke-dashoffset: 0; }
 }
 
 @media (max-width: 960px) {
