@@ -70,39 +70,43 @@
           <button class="btn btn--sm" type="button" data-arena data-i18n="who.arena.cta"></button>
         </div>
         <p class="search__msg" id="searchMsg" role="status"></p>
-        <!-- Результат VIN, «Po marce» и OE (рисует vinRes() в app.js): узнавание → что нужно → популярные детали
-             (только у моделей с витриной) → что дальше → канал и отправка; без формы -->
+        <!-- Результат VIN, «Po marce» и OE — два шага (рисует vinRes() в app.js; прототип одобрен 2026-10-27):
+             1 «Czego potrzebujesz?» — поле, подсказки ссылками, «Dalej»; 2 «Gdzie odpisać?» — три кнопки-канала, сразу отправляют -->
         <div class="vinres" id="vinRes" hidden>
-          <div class="vinres__head" id="vrHead"></div>
+          <div class="vinres__top"><p class="vinres__car" id="vrHead"></p><span class="vinres__step" id="vrStep"></span></div>
           <div class="cars vinres__cars" id="vrCar" role="group" data-i18n-aria="tab.car" hidden></div>
-          <!-- «Czego potrzebujesz?»: подпись и справа тихая строка про фото, поле, чипы категорий -->
-          <div class="vinres__need">
-            <div class="vinres__needk"><label class="vinres__k" for="vrNote" id="vrNoteK"></label><p class="vinres__hint" id="vrPhoto" data-i18n="vr.photo"></p></div>
-            <input id="vrNote" autocomplete="off">
-            <div class="tags" id="vrCats" role="group" data-i18n-aria="vr.cats"></div>
+          <div class="vinres__pane" id="vrS1">
+            <label class="vinres__h" for="vrNote" id="vrNoteK"></label>
+            <input class="vinres__field" id="vrNote" autocomplete="off" aria-describedby="vrNoteMsg">
+            <p class="search__msg vinres__err" id="vrNoteMsg" role="status"></p>
+            <p class="vinres__sug" id="vrSug"></p>
+            <!-- Без VIN: VIN по желанию — за ссылкой «+ Mam VIN», та же проверка, что в поле первого экрана -->
+            <button type="button" class="vinres__link vinres__hasvin" id="vrHasVin" data-i18n="vr.hasvin" hidden></button>
+            <div class="vinres__vin-box" id="vrVinBox" hidden>
+              <input class="vinres__field is-vin" id="vrVin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="vr.vin" data-i18n-aria="vr.vin">
+              <p class="search__msg vinres__err" id="vrVinMsg" role="status"></p>
+            </div>
+            <button type="button" class="btn vinres__go" id="vrDalej"><span data-i18n="vr.dalej"></span> <span aria-hidden="true">›</span></button>
           </div>
-          <div id="vrParts"></div>
-          <!-- Без VIN: VIN по желанию — та же проверка, что в поле первого экрана -->
-          <div class="vinres__note" id="vrVinBox" hidden>
-            <input id="vrVin" class="is-vin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="vr.vin" data-i18n-aria="vr.vin">
-            <p class="search__msg vinres__err" id="vrVinMsg" role="status"></p>
-          </div>
-          <p class="vinres__hint" id="vrNext"></p>
-          <div class="vinres__send">
-            <div class="vinres__sendhead">
-              <!-- «Kiedy potrzebujesz?» — одна строка с «Wolę formularz» вместо подписи «Wyślij zapytanie przez» (так панель не выше) -->
-              <div class="vinres__when" role="group" aria-labelledby="vrWhenK"><span class="vinres__k" id="vrWhenK" data-i18n="vr.when"></span><span class="tags" id="vrWhen"></span></div>
+          <div class="vinres__pane" id="vrS2" hidden>
+            <button type="button" class="vinres__link vinres__back" id="vrBack"></button>
+            <h3 class="vinres__h" id="vrWhereK" data-i18n="vr.where" tabindex="-1"></h3>
+            <div class="vinres__chs" role="group" aria-labelledby="vrWhereK">
+              <a class="btn vinres__ch" data-ch="wa"><span class="ix" data-ix="whatsapp"></span><span data-i18n="vr.go.wa"></span> <span aria-hidden="true">›</span></a>
+              <a class="vinres__ch vinres__ch--light" data-ch="tg"><span class="ix" data-ix="send-2"></span>Telegram <span aria-hidden="true">›</span></a>
+              <a class="vinres__ch vinres__ch--light" data-ch="mail"><span class="ix" data-ix="sms"></span>E-mail <span aria-hidden="true">›</span></a>
+            </div>
+            <!-- «Pilne» и справа «Wolę formularz» — в одну строку, так шаг 2 помещается на 1280×720 без прокрутки -->
+            <div class="vinres__opts">
+              <label class="vinres__urgent"><input type="checkbox" id="vrUrgent"> <span data-i18n="vr.urgent"></span></label>
               <button type="button" class="vinres__link vinres__form" id="vrForm" data-i18n="vr.form"></button>
             </div>
-            <div class="vinres__row">
-              <div class="seg" role="group" data-i18n-aria="vr.ch" id="vrCh">
-                <button type="button" data-ch="wa" aria-pressed="true">WhatsApp</button>
-                <button type="button" data-ch="tg" aria-pressed="false">Telegram</button>
-                <button type="button" data-ch="mail" aria-pressed="false">E-mail</button>
-              </div>
-              <a class="btn vinres__go" id="vrGo"></a>
-            </div>
-            <p class="vinres__msg" id="vrMsg" role="status"></p>
+            <p class="vinres__hint" id="vrNext"></p>
+          </div>
+          <div class="vinres__pane vinres__done" id="vrDone" hidden>
+            <h3 class="vinres__h" id="vrDoneT" tabindex="-1"></h3>
+            <p class="vinres__hint" id="vrDoneP" role="status"></p>
+            <button type="button" class="vinres__link" id="vrAgain" data-i18n="vr.again"></button>
           </div>
         </div>
         <p class="search__alt" id="searchAlt" data-i18n="hero.alt"></p>

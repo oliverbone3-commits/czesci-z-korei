@@ -113,6 +113,13 @@ const NEEDS = {
   service: { pl: "Filtry i serwis", en: "Filters & service" },
   unsure: { pl: "Nie wiem", en: "Not sure" },
 };
+// Подсказки «Często szukane:» под полем панели результата — у моделей без витрины (у моделей с витриной — её 3 детали).
+const COMMON_PARTS = [
+  { pl: "Klocki hamulcowe", en: "Brake pads" },
+  { pl: "Reflektor", en: "Headlight" },
+  { pl: "Lusterko", en: "Mirror" },
+];
+// Чипы NEEDS и срочность URGENCY — только в модалке заявки; в панели результата срочность — галочка «Pilne» (URGENCY.express.msg).
 // «Kiedy potrzebujesz?» — один выбор, необязательный; в сообщение строкой «Dostawa: ekspres / morzem».
 const URGENCY = {
   express: { pl: "Pilne — ekspres", en: "Urgent — express", msg: { pl: "ekspres", en: "express" } },
