@@ -72,25 +72,32 @@
         <p class="search__msg" id="searchMsg" role="status"></p>
         <!-- Нет VIN под рукой — переход на вкладку «Po marce» со списком марок -->
         <button type="button" class="vinres__link search__novin" id="searchNoVin" data-i18n="search.novin"></button>
-        <!-- Результат VIN: модель → детали → канал → отправка, без формы (рисует vinRes() в app.js) -->
+        <!-- Результат VIN, «Po marce» и OE (рисует vinRes() в app.js): узнавание → что нужно → популярные детали
+             (только у моделей с витриной) → что дальше → канал и отправка; без формы -->
         <div class="vinres" id="vinRes" hidden>
           <div class="vinres__head" id="vrHead"></div>
           <div class="cars vinres__cars" id="vrCar" role="group" data-i18n-aria="tab.car" hidden></div>
+          <!-- «Czego potrzebujesz?»: подпись и справа тихая строка про фото, поле, чипы категорий -->
+          <div class="vinres__need">
+            <div class="vinres__needk"><label class="vinres__k" for="vrNote" id="vrNoteK"></label><p class="vinres__hint" id="vrPhoto" data-i18n="vr.photo"></p></div>
+            <input id="vrNote" autocomplete="off">
+            <div class="tags" id="vrCats" role="group" data-i18n-aria="vr.cats"></div>
+          </div>
           <div id="vrParts"></div>
-          <label class="vinres__note" id="vrNoteBox" hidden><span id="vrNoteK"></span><input id="vrNote" autocomplete="off"></label>
           <!-- Без VIN: VIN по желанию — та же проверка, что в поле первого экрана -->
           <div class="vinres__note" id="vrVinBox" hidden>
-            <label for="vrVin" data-i18n="vr.vin"></label>
-            <input id="vrVin" class="is-vin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="search.vin.ph">
+            <input id="vrVin" class="is-vin" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="vrVinMsg" data-i18n-ph="vr.vin" data-i18n-aria="vr.vin">
             <p class="search__msg vinres__err" id="vrVinMsg" role="status"></p>
           </div>
+          <p class="vinres__hint" id="vrNext"></p>
           <div class="vinres__send">
             <div class="vinres__sendhead">
-              <p class="vinres__k" id="vrChK" data-i18n="vr.ch"></p>
+              <!-- «Kiedy potrzebujesz?» — одна строка с «Wolę formularz» вместо подписи «Wyślij zapytanie przez» (так панель не выше) -->
+              <div class="vinres__when" role="group" aria-labelledby="vrWhenK"><span class="vinres__k" id="vrWhenK" data-i18n="vr.when"></span><span class="tags" id="vrWhen"></span></div>
               <button type="button" class="vinres__link vinres__form" id="vrForm" data-i18n="vr.form"></button>
             </div>
             <div class="vinres__row">
-              <div class="seg" role="group" aria-labelledby="vrChK" id="vrCh">
+              <div class="seg" role="group" data-i18n-aria="vr.ch" id="vrCh">
                 <button type="button" data-ch="wa" aria-pressed="true">WhatsApp</button>
                 <button type="button" data-ch="tg" aria-pressed="false">Telegram</button>
                 <button type="button" data-ch="mail" aria-pressed="false">E-mail</button>
@@ -101,6 +108,8 @@
           </div>
         </div>
         <p class="search__alt" id="searchAlt" data-i18n="hero.alt"></p>
+        <!-- Где взять VIN — на месте строки «albo napisz», пока поле VIN в фокусе (высота карточки не меняется) -->
+        <p class="search__alt" id="searchWhere" data-i18n="search.vin.where" hidden></p>
       </div>
       <!-- Марки: светло-серые логотипы без подписей; клик фильтрует популярные модели -->
       <div class="brands" id="brands"></div>
@@ -369,6 +378,8 @@
           </div>
           <label class="inline form__opt"><input type="checkbox" name="arena"> <span data-i18n="form.arena"></span></label>
           <label><span data-i18n="form.parts"></span> <textarea name="parts" rows="3" data-i18n-ph="form.parts.ph"></textarea></label>
+          <div class="tags" id="formCats" role="group" data-i18n-aria="vr.cats"></div>
+          <div class="form__when" role="group" aria-labelledby="formWhenK"><span class="form__k" id="formWhenK" data-i18n="vr.when"></span><div class="tags" id="formWhen"></div></div>
           <div class="form__row">
             <label><span data-i18n="form.contact"></span> <input name="contact" type="tel" autocomplete="tel" data-i18n-ph="form.contact.ph"></label>
             <label><span data-i18n="form.email"></span> <input name="email" type="email" autocomplete="email" data-i18n-ph="form.email.ph"></label>

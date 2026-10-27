@@ -42,6 +42,10 @@ const POPULAR = [
 //   «zgadza się?», а без совпадения сразу предлагаем выбрать модель. K8, Sorento, G80, GV80, Grandeur не угадываем:
 //   надёжных примеров VIN не нашли. Контрольную цифру (9-й знак) не проверяем — у KDM-машин на неё нельзя полагаться.
 const VIN_BRANDS = { KNA: "kia", KNC: "kia", KND: "kia", KMH: "hyundai", KM8: "hyundai", KMF: "hyundai", KMJ: "hyundai", KMT: "genesis", KMU: "genesis" };
+// Модельный год — 10-й знак VIN (стандарт ISO 3779 / NHTSA: без I, O, Q, U, Z и 0; цикл 30 лет, берём 2010–2027).
+// ВНИМАНИЕ: у KDM-машин (внутренний рынок Кореи) 10-й знак может не следовать этому стандарту — проверить на реальных
+// VIN клиентов Arena; не подтвердится — убрать год из узнавания (vinYear() в app.js вернёт null, если таблицу очистить).
+const VIN_YEARS = "ABCDEFGHJKLMNPRSTV"; // A = 2010 … T = 2026, V = 2027
 const VIN_MODELS = [
   { prefix: "KNDN", model: "carnival" },
   { prefix: "KM8R", model: "palisade" },
@@ -95,6 +99,24 @@ const CATEGORIES = {
   lights: { pl: "Oświetlenie", en: "Lighting" },
   body: { pl: "Nadwozie", en: "Body" },
   service: { pl: "Serwis", en: "Service" },
+};
+
+// Чипы «Czego potrzebujesz?» в панели результата и в форме заявки — одинаковые для любой модели (мультивыбор;
+// «Nie wiem» — взаимоисключающий с остальными). Список — Дмитрий, 2026-10-27.
+const NEEDS = {
+  body: { pl: "Karoseria", en: "Body" },
+  lights: { pl: "Oświetlenie", en: "Lighting" },
+  brakes: { pl: "Hamulce", en: "Brakes" },
+  suspension: { pl: "Zawieszenie", en: "Suspension" },
+  interior: { pl: "Wnętrze", en: "Interior" },
+  electrics: { pl: "Elektryka", en: "Electrics" },
+  service: { pl: "Filtry i serwis", en: "Filters & service" },
+  unsure: { pl: "Nie wiem", en: "Not sure" },
+};
+// «Kiedy potrzebujesz?» — один выбор, необязательный; в сообщение строкой «Dostawa: ekspres / morzem».
+const URGENCY = {
+  express: { pl: "Pilne — ekspres", en: "Urgent — express", msg: { pl: "ekspres", en: "express" } },
+  sea: { pl: "Mogę poczekać — taniej", en: "Can wait — cheaper", msg: { pl: "morzem", en: "sea" } },
 };
 
 // Повторяющиеся названия деталей.
