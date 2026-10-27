@@ -47,6 +47,8 @@ function applyLang() {
   searchErr("");
   if (dlg.open) rqRender();
   messengerLinks();
+  footContacts();
+  footLang();
   pauseLabel();
   delivery();
   brands();
@@ -64,6 +66,14 @@ function messengerLinks() {
     tg: `https://t.me/${TELEGRAM_USER}`,
   };
   document.querySelectorAll("[data-msg]").forEach((a) => (a.href = href[a.dataset.msg]));
+}
+
+// Контакты в подвале — из тех же констант, что и заявка.
+function footContacts() {
+  $("footWa").textContent = PHONE;
+  $("footTg").textContent = "@" + TELEGRAM_USER;
+  $("footMail").textContent = CONTACT_EMAIL;
+  $("footMail").href = `mailto:${CONTACT_EMAIL}`;
 }
 
 /* ---------- Первый экран: меняющаяся модель и поле поиска ---------- */
@@ -1171,14 +1181,27 @@ function langClose(focusBtn = true) {
   langBtn.setAttribute("aria-expanded", "false");
   if (focusBtn) langBtn.focus();
 }
+function setLang(code) {
+  if (code === lang) return;
+  lang = code;
+  try { localStorage.setItem("lang", lang); } catch (err) { /* без запоминания */ }
+  applyLang();
+}
 function langPick(code) {
-  if (code !== lang) {
-    lang = code;
-    try { localStorage.setItem("lang", lang); } catch (err) { /* без запоминания */ }
-    applyLang();
-  }
+  setLang(code);
   langClose();
 }
+// В подвале — тот же выбор языка, но открытым рядом кнопок «PL · EN».
+function footLang() {
+  $("footLang").innerHTML = LANGS.map(([code, label]) =>
+    `<button type="button" data-lang="${code}" lang="${code}" aria-label="${label}" aria-pressed="${code === lang}">${code.toUpperCase()}</button>`).join("");
+}
+$("footLang").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-lang]");
+  if (!b) return;
+  setLang(b.dataset.lang);
+  $("footLang").querySelector(`[data-lang="${lang}"]`).focus();
+});
 langBtn.addEventListener("click", () => (langList.hidden ? langOpen() : langClose()));
 langBtn.addEventListener("keydown", (e) => {
   if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); langOpen(); }

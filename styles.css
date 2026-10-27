@@ -794,12 +794,41 @@ html:has(.dlg[open]) { overflow: hidden; }
   .rq__row dt { grid-column: 1 / -1; margin-bottom: calc(-1 * var(--sp-2)); }
 }
 
-.foot { background: var(--black); color: var(--on-black); padding: var(--sp-6) 0; font-size: var(--fs-sm); }
-.foot p { margin: var(--sp-1) 0; }
-.foot .muted { color: #7d8387; }
-.foot a { color: #fff; font-weight: 700; }
-.foot .credits { margin-top: var(--sp-3); font-size: var(--fs-legal); color: #7d8387; }
-.foot .credits a { font-weight: 500; color: #b9bec2; }
+/* Подвал (§3.21): 4 колонки — бренд, навигация, контакт, информация; ниже строка © + язык и юридическая оговорка */
+.foot { background: var(--black); color: var(--on-black); padding: var(--sp-8) 0 var(--sp-6); font-size: var(--fs-sm); }
+.foot p { margin: 0; }
+.foot ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--sp-2); }
+.foot__cols { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: var(--sp-6) var(--sp-5); }
+.foot__brand .logo { display: inline-block; color: #fff; font-size: var(--fs-lg); padding: 0; }
+.foot__by { display: block; width: max-content; margin: var(--sp-2) 0 var(--sp-4); color: var(--on-black); text-decoration: none; }
+.foot__by:hover { color: var(--green); }
+.foot__brand p { max-width: 32ch; }
+.foot h2 { margin: 0 0 var(--sp-4); font-size: var(--fs-ui); font-weight: 700; letter-spacing: 0; color: #fff; }
+.foot__soon { font-size: var(--fs-sm); font-weight: 500; color: #7d8387; }
+.foot__col a:not(.btn) { color: var(--on-black); text-decoration: none; }
+.foot__col a:not(.btn):hover { color: #fff; }
+.foot__val { color: #7d8387; white-space: nowrap; }
+.foot__dim { color: #7d8387; }
+.foot__col > .foot__dim { margin: var(--sp-4) 0 var(--sp-3); }
+.foot .foot__addr { margin-top: var(--sp-5); color: #fff; }
+.foot__bar { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); margin-top: var(--sp-7); padding-top: var(--sp-4); border-top: 1px solid var(--black-2); }
+.foot__lang { display: flex; gap: var(--sp-1); }
+.foot__lang button { min-width: 44px; min-height: 44px; padding: 0 var(--sp-3); border: 0; border-radius: 999px; background: transparent;
+  color: var(--on-black); font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: background .2s, color .2s; }
+.foot__lang button:hover { color: #fff; }
+.foot__lang button[aria-pressed="true"] { background: var(--black-2); color: #fff; }
+.foot .foot__legal { margin-top: var(--sp-3); max-width: none; font-size: var(--fs-legal); line-height: 1.5; color: #7d8387; }
+@media (max-width: 960px) { .foot__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .foot__brand { grid-column: 1 / -1; } }
+@media (max-width: 640px) {
+  .foot { padding-top: var(--sp-7); }
+  /* Навигация и информация рядом, контакт — на всю ширину под ними */
+  .foot__cols { grid-template-areas: "brand brand" "nav info" "contact contact"; }
+  .foot__brand { grid-area: brand; }
+  .foot__cols > nav { grid-area: nav; }
+  .foot__col:nth-child(3) { grid-area: contact; }
+  .foot__col:nth-child(4) { grid-area: info; }
+  .foot__bar { flex-wrap: wrap; }
+}
 
 /* Иконки Iconsax (icons.js): основной тон — цвет текста, второй (.ix-2) — зелёный Arena */
 .ix { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; --ix-accent: #00a34a; }

@@ -88,6 +88,8 @@
   </section>
 
   <!-- Баннеры-карусель — спрятаны 2026-10-26 (решение пользователя: пока непонятно, зачем блок; переосмыслить). Вернуть — убрать hidden -->
+  <!-- При возврате блока нужна подпись автора фото Kia Carnival в баннере: Ethan Llamas, CC BY-SA 4.0,
+       https://commons.wikimedia.org/wiki/File:Kia_Carnival_KA4_PE_1.6T_EX_HEV_Snowflake_White_Pearl.jpg -->
   <section class="section section--flush" id="promoSection" hidden>
     <div class="wrap">
       <div class="promo" id="promo">
@@ -314,17 +316,53 @@
   </section>
   </main>
 
+  <!-- Подвал по мотивам carwow: 4 колонки (бренд · навигация · контакт · информация), нижняя строка © + язык, юридическая оговорка.
+       Контакты подставляет footContacts() из констант в начале app.js — значения здесь не дублировать. -->
   <footer class="foot">
     <div class="wrap">
-      <p data-i18n="foot.arena"></p>
-      <p data-i18n="foot.1"></p>
-      <p class="muted" data-i18n="foot.2"></p>
-      <p class="credits">
-        Foto: <a href="https://unsplash.com/" target="_blank" rel="noopener">Unsplash</a> (statek, warsztat; koło — Franck V.; trasa: Jinhan Moon, Tuan P., Harald Smith, Kamil Gliwiński, Toni Pomar, Maarten van den Heuvel) · Zdjęcia części: wizualizacje poglądowe (Google Gemini) ·
-        Kia Carnival w banerze — Ethan Llamas, <a href="https://commons.wikimedia.org/wiki/File:Kia_Carnival_KA4_PE_1.6T_EX_HEV_Snowflake_White_Pearl.jpg" target="_blank" rel="noopener">CC BY-SA 4.0</a>; auta na pierwszym ekranie, w kartach modeli i zdjęcia części — wygenerowane (AI) ·
-        Logo marek: <a href="https://simpleicons.org/" target="_blank" rel="noopener">Simple Icons</a> (Hyundai, Kia), <a href="https://commons.wikimedia.org/wiki/File:Genesis_Motor_Logo.svg" target="_blank" rel="noopener">Wikimedia Commons</a> (Genesis), <a href="https://github.com/filippofilip95/car-logos-dataset" target="_blank" rel="noopener">car-logos-dataset</a> (SsangYong) — znaki towarowe należą do ich właścicieli ·
-        Ikony: <a href="https://iconsax.io" target="_blank" rel="noopener">Iconsax</a>
-      </p>
+      <div class="foot__cols">
+        <div class="foot__brand">
+          <a class="logo" href="#">Części z Korei <span>pilot</span></a>
+          <a class="foot__by" href="https://arena-auto.pl/" target="_blank" rel="noopener" data-i18n="brand.by"></a>
+          <p data-i18n="foot.about"></p>
+        </div>
+        <nav class="foot__col" aria-labelledby="footNavH">
+          <h2 id="footNavH" data-i18n="foot.nav"></h2>
+          <ul>
+            <li><a href="#models" data-i18n="nav.models"></a></li>
+            <li><a href="#kits" data-i18n="nav.kits"></a></li>
+            <li><a href="#vitrine" data-i18n="nav.examples"></a></li>
+            <li><a href="#how" data-i18n="nav.how"></a></li>
+            <li><a href="#delivery" data-i18n="foot.dlv"></a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <div class="foot__col">
+          <h2 data-i18n="foot.contact"></h2>
+          <ul>
+            <li><a data-msg="wa" target="_blank" rel="noopener">WhatsApp <span class="foot__val" id="footWa"></span></a></li>
+            <li><a data-msg="tg" target="_blank" rel="noopener">Telegram <span class="foot__val" id="footTg"></span></a></li>
+            <li><a id="footMail"></a></li>
+          </ul>
+          <p class="foot__dim" data-i18n="foot.reply"></p>
+          <a class="btn btn--sm" href="#vin"><span data-i18n="nav.vin"></span> <span aria-hidden="true">›</span></a>
+        </div>
+        <div class="foot__col">
+          <h2><span data-i18n="foot.info"></span> <span class="foot__soon" data-i18n="foot.soon"></span></h2>
+          <ul class="foot__dim">
+            <li data-i18n="foot.seller"></li>
+            <li data-i18n="foot.terms"></li>
+            <li data-i18n="foot.privacy"></li>
+            <li data-i18n="foot.returns"></li>
+          </ul>
+          <p class="foot__addr">Arena Auto<br><span class="foot__dim">Poznań, ul.&nbsp;Poznańska&nbsp;62/32</span></p>
+        </div>
+      </div>
+      <div class="foot__bar">
+        <p data-i18n="foot.copy"></p>
+        <div class="foot__lang" id="footLang" role="group" aria-label="Język / Language"></div>
+      </div>
+      <p class="foot__legal" data-i18n="foot.legal"></p>
     </div>
   </footer>
 
