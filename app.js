@@ -717,8 +717,12 @@ function models() {
       meta = `${count} ${t("models.count")}`;
     }
     // Масштаб и сдвиг фото из замера box: крыша → 10%, колёса → 78% высоты карточки, центр машины → правый край.
-    const [roof, wheels, cx] = m.box, h = 68 / (wheels - roof);
-    const pos = `--h:${h.toFixed(1)};--t:${(10 - roof * h).toFixed(1)};--cx:${cx}`;
+    // Только у модели без side: у профилей место считает placeSides().
+    let pos = "";
+    if (!m.side) {
+      const [roof, wheels, cx] = m.box, h = 68 / (wheels - roof);
+      pos = `--h:${h.toFixed(1)};--t:${(10 - roof * h).toFixed(1)};--cx:${cx}`;
+    }
     const open = m.key === openKey;
     const side = m.side ? `<img class="model__side" src="img/models/side/${m.key}.jpg" alt="" loading="lazy">` : "";
     return `<article class="model reveal${open ? " is-open" : ""}${m.side ? " has-side" : ""}" data-pop="${m.key}" style="${pos}">
@@ -752,7 +756,7 @@ function models() {
 
 // Модели с боковым профилем (side): фото студии всегда закрывает всю карточку (без подложки и растушёвки).
 // Свёрнутая: перед машины у левого края, корма за правым. Раскрытая: кадр сдвигается (--slide), машина уходит
-// вправо за панель, под панелью — та же пустая студия из этого снимка. Высота машины ≈ 48% карточки, колёса ≈ 81%.
+// вправо за панель, под панелью — та же пустая студия из этого снимка. Колёса у всех на 83% высоты, машина ≈ 48–60% (сколько позволяет кадр).
 function placeSides() {
   const wide = matchMedia("(min-width: 641px)").matches;
   const ow = getComputedStyle(grid).getPropertyValue("--ow").trim();
@@ -762,8 +766,9 @@ function placeSides() {
     const m = POPULAR.find((x) => x.key === card.dataset.pop), [roof, wheels, front] = m.side;
     const img = card.querySelector(".model__side"), cardH = card.offsetHeight;
     const ratio = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 21 / 9;
-    const imgH = Math.max(1, 0.48 / (wheels - roof)) * cardH, imgW = imgH * ratio;
-    const top = Math.min(0, Math.max(cardH - imgH, cardH * 0.81 - wheels * imgH));
+    // Колёса всегда на 83%: если кадр не закрывает карточку сверху или снизу, он крупнее (машина выше 48%).
+    const imgH = Math.max(1, 0.48 / (wheels - roof), 0.83 / wheels, 0.17 / (1 - wheels)) * cardH, imgW = imgH * ratio;
+    const top = cardH * 0.83 - wheels * imgH;
     const clampX = (x, boxW) => Math.min(0, Math.max(boxW - imgW, x));
     const left = clampX(18 - front * imgW, shutW);
     const openLeft = wide ? clampX(266 - front * imgW, openW) : left;
