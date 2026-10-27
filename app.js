@@ -139,7 +139,7 @@ $("searchForm").addEventListener("submit", (e) => {
 // Шаг 2 — детали, шаг 3 — сводка и канал (WhatsApp / Telegram / e-mail), "done" — честный статус и запасной путь.
 // Год не спрашиваем и не показываем: 10-й знак VIN у KDM не проверен (VIN_YEARS в data.js).
 // parts: { id, name (строка или { pl, en }), oe, model (ключ витрины), kit (подпись авто набора) }.
-const req = { vin: "", brand: null, model: null, other: "", carOk: false, arena: false, parts: [], urgent: false, draft: "", vinDraft: "" };
+const req = { vin: "", brand: null, model: null, other: "", carOk: false, arena: false, parts: [], urgent: true, draft: "", vinDraft: "" };
 const rq = { step: 1, view: "how", hist: [], done: null, copied: false };
 const dlg = $("vinDlg");
 let opener = null;
@@ -194,7 +194,7 @@ function sugList() {
 // После отправки — новая заявка на то же авто: детали и срочность сбрасываются (до того, как вход добавит свою деталь).
 function reqFresh() {
   if (rq.step !== "done") return;
-  Object.assign(req, { parts: [], urgent: false, draft: "" });
+  Object.assign(req, { parts: [], urgent: true, draft: "" });
   rq.step = 1;
 }
 function reqOpen(step, view) {
@@ -310,7 +310,10 @@ function rqParts() {
       <button type="button" class="round" data-go="parts:add" aria-label="${t("rq.add")}">+</button></div>
     <p class="rq__err" id="rqErr" role="alert"></p></div>
     <p class="rq__sug" id="rqSug"></p>
-    <label class="rq__check"><input type="checkbox" id="rqUrgent"${req.urgent ? " checked" : ""}> <span>${t("rq.urgent")}</span></label>
+    <div class="rq__dlv" role="group" aria-labelledby="rqDlvK"><p class="rq__k" id="rqDlvK">${t("rq.sum.dlv")}</p>
+      <div class="seg">${[["e", true], ["c", false]].map(([m, on]) => `<button type="button" data-dlv="${m}" aria-pressed="${req.urgent === on}">
+        ${t(`del.${m}.tab`)}<small>${t(`rq.dlv.${m}.s`)}</small></button>`).join("")}</div>
+      <p class="rq__sub">${t("rq.dlv.note")}</p></div>
     <p class="rq__sub">${t("rq.photo")}</p>` + next("parts:next");
 }
 // Список выбранных деталей и подсказки — без перерисовки поля (на телефоне клавиатура не прячется).
@@ -383,6 +386,12 @@ $("rqBody").addEventListener("click", (e) => {
   if (sug) { addPart(sugList().list.find((p) => p.id === sug.dataset.sug)); rqErr("", "rqAdd"); rqList(); return $("rqAdd").focus(); }
   const ch = e.target.closest("[data-ch]");
   if (ch) return rqSent(ch.dataset.ch);
+  // Доставка: ekspres (самолёт, дороже) или morzem (контейнер, дешевле) — переключатель .seg, по умолчанию ekspres (как в блоке доставки)
+  const dl = e.target.closest("[data-dlv]");
+  if (dl) {
+    req.urgent = dl.dataset.dlv === "e";
+    return $("rqBody").querySelectorAll("[data-dlv]").forEach((b) => b.setAttribute("aria-pressed", String(b === dl)));
+  }
   const g = e.target.closest("[data-go]");
   if (!g) return;
   const [v, a] = g.dataset.go.split(":");
@@ -410,7 +419,7 @@ $("rqBody").addEventListener("click", (e) => {
   if (v === "parts") return a === "add" ? addDraft() : partsNext();
   if (v === "sum") {
     go(a === "car" ? 1 : 2, a === "car" ? carView() : null);
-    if (a === "dlv") $("rqUrgent").focus();
+    if (a === "dlv") $("rqBody").querySelector('[data-dlv][aria-pressed="true"]').focus();
     return;
   }
   // Буфер недоступен (запрет браузера) — показываем текст сообщения выделенным, чтобы скопировать вручную.
@@ -453,7 +462,6 @@ $("rqBody").addEventListener("input", (e) => {
     e.target.removeAttribute("aria-invalid");
   }
 });
-$("rqBody").addEventListener("change", (e) => { if (e.target.id === "rqUrgent") req.urgent = e.target.checked; });
 $("rqBody").addEventListener("keydown", (e) => {
   if (e.key !== "Enter" || e.target.tagName !== "INPUT" || e.target.type === "checkbox") return;
   e.preventDefault();
@@ -469,7 +477,7 @@ function reqText() {
   const car = carName();
   return [t("msg.hello"), `VIN: ${req.vin || t("rq.msg.novin")}`, car ? `${t("rq.msg.car")}: ${car}` : null,
     req.arena ? t("rq.msg.arena") : null, `${t("rq.msg.parts")}:`, ...req.parts.map((p) => "- " + partText(p)),
-    req.urgent ? `${t("rq.msg.dlv")}: ${t("rq.msg.express")}` : null, `Lang: ${lang}`].filter(Boolean).join("\n");
+    `${t("rq.msg.dlv")}: ${t(req.urgent ? "rq.msg.express" : "rq.msg.sea")}`, `Lang: ${lang}`].filter(Boolean).join("\n");
 }
 // Каналы — настоящие ссылки (клавиатура, средняя кнопка, без всплывающих окон).
 function rqLinks() {
@@ -517,7 +525,7 @@ dlg.addEventListener("focusin", (e) => {
   if (e.target.matches("input")) setTimeout(() => {
     const go = $("rqBody").querySelector(".rq__go");
     if (go) go.scrollIntoView({ block: "nearest" });
-    e.target.closest(".rq__f, .rq__check").scrollIntoView({ block: "nearest" });
+    e.target.closest(".rq__f").scrollIntoView({ block: "nearest" });
   }, 300);
 });
 // Закрыли — страница на месте, заявка сохраняется (после отправки детали сбросит следующее открытие, авто остаётся).

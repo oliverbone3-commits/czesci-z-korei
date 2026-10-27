@@ -753,8 +753,12 @@ html:has(.dlg[open]) { overflow: hidden; }
 .rq__sug { font-size: var(--fs-sm); line-height: 1.6; color: var(--muted); }
 .rq__sug:empty { display: none; }
 .rq__sug .rq__link { margin-right: var(--sp-2); }
-.rq__check { display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; font-size: var(--fs-ui); font-weight: 500; cursor: pointer; }
-.rq__check input { width: 22px; height: 22px; margin: 0; accent-color: var(--green); cursor: pointer; flex: none; }
+/* Доставка — базовый переключатель .seg на всю ширину: название сверху, под ним способ · срок · цена */
+.rq__dlv { display: grid; gap: var(--sp-2); }
+.rq__k { font-size: var(--fs-ui); font-weight: 600; }
+.rq .seg { display: flex; width: 100%; margin: 0; border-radius: 26px; }
+.rq .seg button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 2px; min-height: 64px; padding: var(--sp-2) var(--sp-3); border-radius: 22px; }
+.rq .seg button small { text-align: center; white-space: normal; }
 /* Сводка перед отправкой: строки с разделителями, справа «Zmień» */
 .rq__sum { margin: 0; border: 1px solid var(--line); border-radius: var(--r); }
 .rq__row { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; align-items: baseline; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
