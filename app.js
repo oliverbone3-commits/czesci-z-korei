@@ -78,28 +78,29 @@ function footContacts() {
 
 /* ---------- Первый экран: меняющаяся модель и поле поиска ---------- */
 
-// Модель в заголовке уезжает вправо, следующая въезжает слева. Машины по краям статичные.
+// Сначала «koreańskich aut», потом модели: модель в заголовке уезжает вправо, следующая въезжает слева.
+// Машины по краям статичные.
+const rotName = (i) => (i === 0 ? t("hero.rotAll") : POPULAR[i - 1].name);
 let rotI = 0;
 function rotate() {
   const el = $("rot");
   el.classList.remove("is-in");
   el.classList.add("is-out");
-  rotI = (rotI + 1) % POPULAR.length;
+  rotI = (rotI + 1) % (POPULAR.length + 1);
   setTimeout(() => {
-    el.textContent = POPULAR[rotI].name;
+    el.textContent = rotName(rotI);
     el.classList.remove("is-out");
     void el.offsetWidth;
     el.classList.add("is-in");
   }, 450);
 }
-$("rot").textContent = POPULAR[0].name;
-// Смена модели (WCAG 2.2.2): два круга и стоп; пауза, пока пользователь в поиске или наводит на первый экран;
+$("rot").textContent = rotName(0);
+// Смена модели (WCAG 2.2.2): два круга и стоп на «koreańskich aut»; пауза, пока фокус в поиске
+// (наведение мышью не держит — первый экран во всё окно, курсор почти всегда над ним);
 // при «уменьшить движение» в системе — не крутим вовсе.
-let rotLeft = REDUCED ? 0 : POPULAR.length * 2;
+let rotLeft = REDUCED ? 0 : (POPULAR.length + 1) * 2;
 let heroHold = false;
 const hero = document.querySelector(".hero");
-hero.addEventListener("mouseenter", () => (heroHold = true));
-hero.addEventListener("mouseleave", () => (heroHold = false));
 hero.addEventListener("focusin", () => (heroHold = true));
 hero.addEventListener("focusout", () => (heroHold = false));
 const rotTimer = setInterval(() => {
@@ -107,7 +108,7 @@ const rotTimer = setInterval(() => {
   if (document.hidden || heroHold) return;
   rotate();
   rotLeft--;
-}, 3200);
+}, 2600);
 
 // Параллакс первого экрана: машины отстают от прокрутки и чуть расходятся, наклейки уходят быстрее (ближе к зрителю),
 // текст почти на месте и гаснет к низу экрана; «Popularne modele» наезжает сверху (styles.css).
@@ -1312,6 +1313,7 @@ function setLang(code) {
   if (lang === "pl") u.searchParams.delete("lang"); else u.searchParams.set("lang", lang);
   history.replaceState(history.state, "", u);
   applyLang();
+  if (rotI === 0) $("rot").textContent = rotName(0);
 }
 function langPick(code) {
   setLang(code);
